@@ -25,14 +25,14 @@ export default function Login() {
   return (
     <>
       <Navbar />
-      <main className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8">
+      <main className="flex flex-col items-center justify-center min-h-screen bg-[#121212] text-white text-gray-300 p-8">
         <h1 className="text-3xl font-bold mb-8">
           Login to Your Account
         </h1>
 
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+        <form onSubmit={handleLogin} className="bg-[#1e1e1e] p-8 rounded-lg shadow-md w-full max-w-sm">
           <div className="mb-6">
-            <label className="block mb-2 font-semibold" htmlFor="email">
+            <label className="block mb-2 font-semibold text-gray-300" htmlFor="email">
               Email
             </label>
             <input
@@ -40,13 +40,13 @@ export default function Login() {
               id="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
           <div className="mb-8">
-            <label className="block mb-2 font-semibold" htmlFor="password">
+            <label className="block mb-2 font-semibold text-gray-300" htmlFor="password">
               Password
             </label>
             <input
@@ -54,7 +54,7 @@ export default function Login() {
               id="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
@@ -63,17 +63,23 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-md hover:bg-blue-700 transition"
+            className="w-full bg-[#475569] text-white font-semibold py-3 rounded-md hover:bg-[#3b4a5a] transition"
           >
             Log In
           </button>
         </form>
 
+        <p className="mt-4 text-center">
+          <a href="/reset-password" className="text-sm text-blue-500 hover:underline">
+            Forgot your password?
+          </a>
+        </p>
+
         <div className="w-full max-w-sm mt-4">
           <button
             type="button"
             onClick={() => router.push('/signup')}
-            className="w-full bg-gray-100 text-blue-700 font-semibold py-2 rounded-md hover:bg-gray-200 transition"
+            className="w-full bg-[#475569] text-white font-semibold py-2 rounded-md hover:bg-[#3b4a5a] transition"
           >
             No account? Sign up here
           </button>

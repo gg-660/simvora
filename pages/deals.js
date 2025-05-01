@@ -59,13 +59,12 @@ export default function Deals() {
 
   useEffect(() => {
     async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setExpiredSession(true);
-        router.push('/login');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login?mode=login');
       } else {
-        setUserId(user.id);
-        fetchDeals(user.id);
+        setUserId(session.user.id);
+        fetchDeals(session.user.id);
       }
     }
     checkUser();
@@ -415,37 +414,31 @@ export default function Deals() {
     <>
       <Navbar />
       <div
-        className="flex min-h-screen relative"
-        style={{
-          backgroundColor: '#121212',
-          color: '#e0e0e0',
-        }}
+        className="flex min-h-screen relative bg-[#121212] text-gray-300"
       >
         {/* Main Sidebar (Deal Form) */}
         <aside
-          className="p-6 z-30"
+          className="p-6 z-30 bg-[#1e1e1e] text-gray-300"
           style={{
             position: 'fixed',
             top: '4rem', 
             left: 0,
             width: '20rem',
             height: 'calc(100vh - 4rem)', 
-            backgroundColor: '#1e1e1e',
             boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
             paddingTop: 0,
-            borderRight: '2px solid #333',
+            borderRight: '2px solid #2a2a2a',
             zIndex: 50,
             overflowY: 'auto',
             paddingRight: '10px',
             display: 'flex',
             flexDirection: 'column',
             boxSizing: 'border-box',
-            color: '#e0e0e0'
           }}
         >
           <button
             onClick={handleToggleAssumptions}
-            className="w-full bg-gray-700 text-white font-semibold py-3 rounded-md hover:bg-gray-600 transition mb-4"
+            className="w-full bg-[#2a2a2a] hover:bg-[#475569] text-white font-semibold py-3 rounded-md transition mb-4"
             style={{
               position: 'relative',
               zIndex: 50,
@@ -458,71 +451,70 @@ export default function Deals() {
           <h2 className="text-xl font-bold mb-6">{editIndex !== null ? 'Edit Deal' : 'Create New Deal'}</h2>
           <form onSubmit={handleSubmit} className="space-y-4 mb-6">
             <div>
-              <label htmlFor="dealName" className="block font-semibold">Deal Name</label>
+              <label htmlFor="dealName" className="block font-semibold text-gray-300">Deal Name</label>
               <input
                 type="text"
                 id="dealName"
                 name="dealName"
                 value={formData.dealName}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: Lincoln Park Duplex"
                 required
               />
             </div>
             <div>
-              <label htmlFor="purchasePrice" className="block font-semibold">Purchase Price ($)</label>
+              <label htmlFor="purchasePrice" className="block font-semibold text-gray-300">Purchase Price ($)</label>
               <input
                 type="number"
                 id="purchasePrice"
                 name="purchasePrice"
                 value={formData.purchasePrice}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 450000"
                 required
               />
             </div>
             <div>
-              <label htmlFor="monthlyRent" className="block font-semibold">Monthly Rent ($)</label>
+              <label htmlFor="monthlyRent" className="block font-semibold text-gray-300">Monthly Rent ($)</label>
               <input
                 type="number"
                 id="monthlyRent"
                 name="monthlyRent"
                 value={formData.monthlyRent}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 3500"
                 required
               />
             </div>
             <div>
-              <label htmlFor="monthlyExpenses" className="block font-semibold">Monthly Expenses ($)</label>
+              <label htmlFor="monthlyExpenses" className="block font-semibold text-gray-300">Monthly Expenses ($)</label>
               <input
                 type="number"
                 id="monthlyExpenses"
                 name="monthlyExpenses"
                 value={formData.monthlyExpenses}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 600"
                 required
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-gray-700 text-white font-semibold py-3 rounded-md hover:bg-gray-600 transition"
+              className="w-full bg-[#2a2a2a] hover:bg-[#475569] text-white font-semibold py-3 rounded-md transition"
               disabled={loading}
             >
               {loading ? "Saving..." : editIndex !== null ? "Save Deal" : "Save New Deal"}
             </button>
           </form>
           <div
-            className="deals-section"
+            className="deals-section bg-[#1e1e1e]"
             style={{
               position: 'relative',
               zIndex: 10,
-              background: '#1e1e1e',
             }}
           >
             <h3 className="text-lg font-semibold mb-4">Your Deals</h3>
@@ -530,19 +522,19 @@ export default function Deals() {
               {savedDeals.map((deal) => (
                 <li
                   key={deal.id}
-                  className={`flex justify-between items-center p-3 bg-[#232323] rounded-md shadow-sm hover:bg-[#282828] cursor-pointer${selectedDeal && selectedDeal.id === deal.id ? ' ring-2 ring-gray-500' : ''}`}
+                  className={`flex justify-between items-center p-3 bg-[#2a2a2a] rounded-md shadow-sm hover:bg-[#232323] cursor-pointer${selectedDeal && selectedDeal.id === deal.id ? ' ring-2 ring-blue-500' : ''}`}
                   onClick={() => handleSelectDeal(deal)}
                   tabIndex={0}
                   aria-label={`Select deal ${deal.deal_name}`}
                 >
-                  <span className="font-semibold text-sm truncate max-w-[8rem]" title={deal.deal_name}>{deal.deal_name}</span>
+                  <span className="font-semibold text-sm truncate max-w-[8rem] text-gray-300" title={deal.deal_name}>{deal.deal_name}</span>
                   <div className="flex items-center ml-2 w-auto flex-shrink-0" style={{ minWidth: 0 }}>
                     <button
                       onClick={e => { e.stopPropagation(); handleEditDeal(deal); }}
-                      className="text-gray-400 p-2 rounded-md hover:text-blue-400"
+                      className="text-gray-400 p-2 rounded-md hover:text-[#475569]"
                       title="Edit Deal"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 hover:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 hover:text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487a2.25 2.25 0 1 1 3.182 3.182L7.5 20.213l-4.182.455.455-4.182 12.089-12.089z" />
                       </svg>
                     </button>
@@ -564,7 +556,7 @@ export default function Deals() {
 
         {/* Assumptions Sidebar */}
         <div
-          className={`assumptions-sidebar${showAssumptions ? ' open' : ''}`}
+          className={`assumptions-sidebar${showAssumptions ? ' open' : ''} bg-[#1e1e1e] text-gray-300`}
           style={{
             left: '20rem',
             width: '20rem',
@@ -573,10 +565,8 @@ export default function Deals() {
             top: '4rem',
             height: 'calc(100vh - 4rem)',
             overflowY: 'auto',
-            backgroundColor: '#1e1e1e',
-            color: '#e0e0e0',
             boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
-            borderLeft: '1px solid #343434',
+            borderLeft: '1px solid #2a2a2a',
             position: 'fixed',
             transition: 'transform 0.5s ease',
             transform: showAssumptions ? 'translateX(0)' : 'translateX(-100%)',
@@ -588,95 +578,95 @@ export default function Deals() {
           {/* Inputs for Assumptions */}
           <div className="space-y-4">
             <div>
-              <label htmlFor="downPayment" className="block font-semibold">Down Payment (%)</label>
+              <label htmlFor="downPayment" className="block font-semibold text-gray-300">Down Payment (%)</label>
               <input
                 type="number"
                 id="downPayment"
                 name="downPayment"
                 value={assumptions.downPayment}
                 onChange={handleAssumptionChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 20"
               />
             </div>
             <div>
-              <label htmlFor="interestRate" className="block font-semibold">Interest Rate (%)</label>
+              <label htmlFor="interestRate" className="block font-semibold text-gray-300">Interest Rate (%)</label>
               <input
                 type="number"
                 id="interestRate"
                 name="interestRate"
                 value={assumptions.interestRate}
                 onChange={handleAssumptionChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 5"
               />
             </div>
             <div>
-              <label htmlFor="loanTerm" className="block font-semibold">Loan Term (Years)</label>
+              <label htmlFor="loanTerm" className="block font-semibold text-gray-300">Loan Term (Years)</label>
               <input
                 type="number"
                 id="loanTerm"
                 name="loanTerm"
                 value={assumptions.loanTerm}
                 onChange={handleAssumptionChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 30"
               />
             </div>
             <div>
-              <label htmlFor="appreciationRate" className="block font-semibold">Appreciation Rate (%)</label>
+              <label htmlFor="appreciationRate" className="block font-semibold text-gray-300">Appreciation Rate (%)</label>
               <input
                 type="number"
                 id="appreciationRate"
                 name="appreciationRate"
                 value={assumptions.appreciationRate}
                 onChange={handleAssumptionChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 3"
               />
             </div>
             <div>
-              <label htmlFor="vacancyRate" className="block font-semibold">Vacancy Rate (%)</label>
+              <label htmlFor="vacancyRate" className="block font-semibold text-gray-300">Vacancy Rate (%)</label>
               <input
                 type="number"
                 id="vacancyRate"
                 name="vacancyRate"
                 value={assumptions.vacancyRate}
                 onChange={handleAssumptionChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 5"
               />
             </div>
             <div>
-              <label htmlFor="inflationRate" className="block font-semibold">Inflation Rate (%)</label>
+              <label htmlFor="inflationRate" className="block font-semibold text-gray-300">Inflation Rate (%)</label>
               <input
                 type="number"
                 id="inflationRate"
                 name="inflationRate"
                 value={assumptions.inflationRate}
                 onChange={handleAssumptionChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
                 placeholder="Ex: 2"
               />
             </div>
             <div>
-  <label htmlFor="saleClosingCost" className="block font-semibold">Sale Closing Cost (%)</label>
-  <input
-    type="number"
-    id="saleClosingCost"
-    name="saleClosingCost"
-    value={assumptions.saleClosingCost}
-    onChange={handleAssumptionChange}
-    className="w-full p-3 border border-gray-300 rounded-md"
-    placeholder="Ex: 6"
-  />
-</div>
+              <label htmlFor="saleClosingCost" className="block font-semibold text-gray-300">Sale Closing Cost (%)</label>
+              <input
+                type="number"
+                id="saleClosingCost"
+                name="saleClosingCost"
+                value={assumptions.saleClosingCost}
+                onChange={handleAssumptionChange}
+                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                placeholder="Ex: 6"
+              />
+            </div>
           </div>
 
           <div className="mt-4">
             <button
               onClick={handleToggleAssumptions}
-              className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700"
+              className="bg-[#2a2a2a] hover:bg-[#475569] text-white py-2 px-4 rounded-md"
             >
               Close Assumptions
             </button>
@@ -685,17 +675,15 @@ export default function Deals() {
 
         {/* Main Content for Displaying Selected Deal */}
         <main
-          className={`flex-1 p-10 pt-16${showAssumptions ? ' content-with-assumptions' : ''}`}
+          className={`flex-1 p-10 pt-16${showAssumptions ? ' content-with-assumptions' : ''} bg-[#121212] text-gray-300`}
           style={{
             marginLeft: showAssumptions ? '40rem' : '20rem',
             transition: 'margin-left 0.3s ease',
             overflowY: 'auto',
-            backgroundColor: '#121212',
-            color: '#e0e0e0',
             minHeight: '100vh'
           }}
         >
-          <div className="bg-[#2a2a2a] border border-gray-600 rounded-lg p-6 mb-10 text-center">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg p-6 mb-10 text-center">
             <h2 className="text-3xl font-bold text-white">{selectedDeal?.deal_name || 'Selected Deal'}</h2>
           </div>
           {selectedDeal ? (
@@ -716,7 +704,7 @@ export default function Deals() {
                 <MetricCard title="Appreciation ($)" value={metrics.appreciation} />
               </div>
 
-              <hr className="my-8 border-gray-700" />
+              <hr className="my-8 border-[#2a2a2a]" />
 
               {/* IRR Metrics Section */}
               <h3 className="text-lg font-bold mt-8 mb-4">IRR Metrics</h3>
@@ -727,7 +715,7 @@ export default function Deals() {
               </div>
 
               {/* Divider */}
-              <hr className="my-8 border-gray-700" />
+              <hr className="my-8 border-[#2a2a2a]" />
 
               {/* Cash Flow Metrics Section */}
               <h3 className="text-lg font-bold mt-8 mb-4">Cash Flow Metrics</h3>
@@ -741,7 +729,7 @@ export default function Deals() {
 
 
               {/* Divider */}
-              <hr className="my-8 border-gray-700" />
+              <hr className="my-8 border-[#2a2a2a]" />
 
               {/* Risk Metrics Section */}
               <h3 className="text-lg font-bold mt-8 mb-4">Risk Metrics</h3>

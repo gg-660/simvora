@@ -35,9 +35,26 @@ export default function Home() {
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">About This Project</h2>
             <p className="text-gray-400 text-lg">
-              [FILLER TEXT] This is where you can describe your motivation behind the tool, the inspiration, and the vision going forward.
-              Explain how this solves a pain point for real estate investors and why you decided to build it.
+              Simvora was born out of a frustration with rigid spreadsheets and overly complex tools. As real estate investors ourselves, we wanted a better way to visualize deal performance and risk without spending hours wrestling with formulas. Simvora combines institutional-level analytics with a clean, intuitive interface while helping investors model long-term projections, compare strategies, and make confident, data-backed decisions.
             </p>
+          </div>
+        </section>
+
+        {/* Sub CTA Highlights */}
+        <section className="py-16 px-6 bg-[#121212] text-center">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-semibold mb-2 text-white">🔒 Your Data Stays Private</h3>
+              <p className="text-gray-400">We never sell your data or track your activity. Your simulations and deals are yours — period.</p>
+            </div>
+            <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-semibold mb-2 text-white">🛠 Beta-Stage, Built for Feedback</h3>
+              <p className="text-gray-400">Simvora is in early beta. We're actively improving and would love your thoughts. Reach us at <a href="mailto:simvoratool@gmail.com" className="text-blue-500 hover:underline">simvoratool@gmail.com</a>.</p>
+            </div>
+            <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-semibold mb-2 text-white">⚡ Fast, Focused, No Bloat</h3>
+              <p className="text-gray-400">Simvora skips the fluff and delivers what serious investors need: speed, clarity, and results.</p>
+            </div>
           </div>
         </section>
 
