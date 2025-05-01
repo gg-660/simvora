@@ -13,15 +13,12 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const result = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setError(error.message);
+    if (result.error) {
+      setError(result.error.message);
     } else {
-      router.push('/deals'); // Redirect to deals page after login
+      router.push('/deals'); // Redirect after auth
     }
   }
 
@@ -29,7 +26,9 @@ export default function Login() {
     <>
       <Navbar />
       <main className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8">
-        <h1 className="text-3xl font-bold mb-8">Login to Your Account</h1>
+        <h1 className="text-3xl font-bold mb-8">
+          Login to Your Account
+        </h1>
 
         <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
           <div className="mb-6">
@@ -69,6 +68,16 @@ export default function Login() {
             Log In
           </button>
         </form>
+
+        <div className="w-full max-w-sm mt-4">
+          <button
+            type="button"
+            onClick={() => router.push('/signup')}
+            className="w-full bg-gray-100 text-blue-700 font-semibold py-2 rounded-md hover:bg-gray-200 transition"
+          >
+            No account? Sign up here
+          </button>
+        </div>
       </main>
     </>
   );
