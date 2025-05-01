@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Navbar from '@/components/Navbar';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 export default function Login() {
   const router = useRouter();
@@ -70,9 +71,9 @@ export default function Login() {
         </form>
 
         <p className="mt-4 text-center">
-          <a href="/reset-password" className="text-sm text-blue-500 hover:underline">
+          <Link href="/reset-password" className="text-sm text-blue-500 hover:underline">
             Forgot your password?
-          </a>
+          </Link>
         </p>
 
         <div className="w-full max-w-sm mt-4">
