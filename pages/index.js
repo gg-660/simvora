@@ -49,7 +49,7 @@ export default function Home() {
             </div>
             <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-semibold mb-2 text-white">🛠 Beta-Stage, Built for Feedback</h3>
-              <p className="text-gray-400">Simvora is in early beta. We&apos;re actively improving and would love your thoughts. Reach us at <a href="mailto:simvoratool@gmail.com" className="text-blue-500 hover:underline">simvoratool@gmail.com</a>.</p>
+              <p className="text-gray-400">Simvora is in early beta. We&apos;re actively improving and would love your thoughts. Reach us at <a href="mailto:hello@simvora.com" className="text-blue-500 hover:underline">simvoratool@gmail.com</a>.</p>
             </div>
             <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-semibold mb-2 text-white">⚡ Fast, Focused, No Bloat</h3>
