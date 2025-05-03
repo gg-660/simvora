@@ -738,6 +738,13 @@ export default function Simulations() {
     }
   }, [selectedDeal, assumptions]);
 
+  // Run calculateMetrics(selectedDeal) whenever assumptions change (and a deal is selected)
+  useEffect(() => {
+    if (selectedDeal) {
+      calculateMetrics(selectedDeal);
+    }
+  }, [assumptions]);
+
   return (
     <>
       <Navbar />

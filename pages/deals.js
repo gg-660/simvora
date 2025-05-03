@@ -4,7 +4,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 
 // Reusable MetricCard component
-function MetricCard({ title, value }) {
+function MetricCard({ title, value, assumptions, selectedDeal, onRecalculate }) {
+  useEffect(() => {
+    if (onRecalculate && selectedDeal && assumptions) {
+      onRecalculate(selectedDeal);
+    }
+  }, [assumptions, selectedDeal]);
   return (
     <div className="bg-[#1e1e1e] shadow-md rounded-lg p-6 flex flex-col items-center justify-center hover:shadow-xl transition">
       <h3 className="text-md font-semibold text-gray-400 mb-2 text-center">{title}</h3>
@@ -690,18 +695,18 @@ export default function Deals() {
             <div>
               {/* Responsive card grid for deal metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
-                <MetricCard title="Purchase Price" value={formatCurrency(selectedDeal.purchase_price)} />
-                <MetricCard title="Down Payment" value={metrics.downPaymentAmount} />
-                <MetricCard title="Monthly Rent" value={formatCurrency(selectedDeal.monthly_rent)} />
-                <MetricCard title="Monthly Expenses" value={formatCurrency(selectedDeal.monthly_expenses)} />
-                <MetricCard title="Monthly Payment" value={metrics.monthlyPayment} />
+                <MetricCard title="Purchase Price" value={formatCurrency(selectedDeal.purchase_price)} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Down Payment" value={metrics.downPaymentAmount} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Monthly Rent" value={formatCurrency(selectedDeal.monthly_rent)} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Monthly Expenses" value={formatCurrency(selectedDeal.monthly_expenses)} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Monthly Payment" value={metrics.monthlyPayment} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
               </div>
 
               {/* Appreciation Metrics Section */}
               <h3 className="text-lg font-bold mt-8 mb-4">Appreciation Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10">
-                <MetricCard title="Final Property Value" value={metrics.finalPropertyValue} />
-                <MetricCard title="Appreciation ($)" value={metrics.appreciation} />
+                <MetricCard title="Final Property Value" value={metrics.finalPropertyValue} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Appreciation ($)" value={metrics.appreciation} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
               </div>
 
               <hr className="my-8 border-[#2a2a2a]" />
@@ -709,9 +714,9 @@ export default function Deals() {
               {/* IRR Metrics Section */}
               <h3 className="text-lg font-bold mt-8 mb-4">IRR Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                <MetricCard title="IRR of Cash Flow" value={metrics.irrOfCashFlow !== undefined && metrics.irrOfCashFlow !== null && metrics.irrOfCashFlow !== 'N/A' ? `${metrics.irrOfCashFlow}%` : 'N/A'} />
-                <MetricCard title="Total IRR (with Appreciation)" value={metrics.totalIRRWithAppreciation !== undefined && metrics.totalIRRWithAppreciation !== null && metrics.totalIRRWithAppreciation !== 'N/A' ? `${metrics.totalIRRWithAppreciation}%` : 'N/A'} />
-                <MetricCard title="Equity Multiple" value={metrics.equityMultiple} />
+                <MetricCard title="IRR of Cash Flow" value={metrics.irrOfCashFlow !== undefined && metrics.irrOfCashFlow !== null && metrics.irrOfCashFlow !== 'N/A' ? `${metrics.irrOfCashFlow}%` : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Total IRR (with Appreciation)" value={metrics.totalIRRWithAppreciation !== undefined && metrics.totalIRRWithAppreciation !== null && metrics.totalIRRWithAppreciation !== 'N/A' ? `${metrics.totalIRRWithAppreciation}%` : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Equity Multiple" value={metrics.equityMultiple} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
               </div>
 
               {/* Divider */}
@@ -720,10 +725,10 @@ export default function Deals() {
               {/* Cash Flow Metrics Section */}
               <h3 className="text-lg font-bold mt-8 mb-4">Cash Flow Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-                <MetricCard title="Total Cash Flow" value={metrics.totalCashFlow} />
-                <MetricCard title="Average Cash Flow" value={metrics.averageCashFlow} />
-                <MetricCard title="Years of Negative Cash Flow" value={metrics.yearsOfNegativeCashFlow} />
-                <MetricCard title="Break Even Year" value={metrics.breakEvenYear !== null ? metrics.breakEvenYear : 'N/A'} />
+                <MetricCard title="Total Cash Flow" value={metrics.totalCashFlow} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Average Cash Flow" value={metrics.averageCashFlow} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Years of Negative Cash Flow" value={metrics.yearsOfNegativeCashFlow} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Break Even Year" value={metrics.breakEvenYear !== null ? metrics.breakEvenYear : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
               </div>
 
 
@@ -734,9 +739,9 @@ export default function Deals() {
               {/* Risk Metrics Section */}
               <h3 className="text-lg font-bold mt-8 mb-4">Risk Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                <MetricCard title="Average DSCR" value={metrics.averageDSCR !== undefined && metrics.averageDSCR !== null && metrics.averageDSCR !== 'N/A' ? metrics.averageDSCR : 'N/A'} />
-                <MetricCard title="Years DSCR &lt; 1.2" value={metrics.yearsDSCRUnder1_2} />
-                <MetricCard title="Sharpe Ratio" value={metrics.sharpeRatio !== undefined && metrics.sharpeRatio !== null && metrics.sharpeRatio !== 'N/A' ? metrics.sharpeRatio : 'N/A'} />
+                <MetricCard title="Average DSCR" value={metrics.averageDSCR !== undefined && metrics.averageDSCR !== null && metrics.averageDSCR !== 'N/A' ? metrics.averageDSCR : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Years DSCR &lt; 1.2" value={metrics.yearsDSCRUnder1_2} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
+                <MetricCard title="Sharpe Ratio" value={metrics.sharpeRatio !== undefined && metrics.sharpeRatio !== null && metrics.sharpeRatio !== 'N/A' ? metrics.sharpeRatio : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
               </div>
             </div>
           ) : (
