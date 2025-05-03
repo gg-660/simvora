@@ -14,13 +14,20 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    const result = await supabase.auth.signInWithPassword({ email, password });
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (result.error) {
-      setError(result.error.message);
-    } else {
-      router.push('/deals'); // Redirect after auth
+    const result = await res.json();
+
+    if (!res.ok) {
+      setError(result.error || 'Login failed');
+      return;
     }
+
+    router.push('/deals'); // Redirect after successful login
   }
 
   return (

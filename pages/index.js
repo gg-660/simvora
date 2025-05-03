@@ -52,8 +52,18 @@ export default function Home() {
               <p className="text-gray-400">Simvora is in early beta. We&apos;re actively improving and would love your thoughts. Reach us at <a href="mailto:hello@simvora.com" className="text-blue-500 hover:underline">hello@simvora.com</a>.</p>
             </div>
             <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-semibold mb-2 text-white">⚡ Fast, Focused, No Bloat</h3>
-              <p className="text-gray-400">Simvora skips the fluff and delivers what serious investors need: speed, clarity, and results.</p>
+              <h3 className="text-xl font-semibold mb-2 text-white">💸 Like What You See?</h3>
+              <p className="text-gray-400">
+                If you find Simvora useful, tips are always appreciated! You can support the project via{' '}
+                <a
+                  href="https://donate.stripe.com/3cs28g3r8buBcwwcMM"
+                  className="text-blue-500 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Stripe
+                </a>.
+              </p>
             </div>
           </div>
         </section>
