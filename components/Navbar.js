@@ -35,6 +35,14 @@ export default function Navbar() {
         >
           Simulations
         </Link>
+        <Link
+          href="/scorecard"
+          className={`text-lg font-semibold px-4 py-2 rounded-md transition ${
+            currentPath === '/scorecard' ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800'
+          }`}
+        >
+          Scorecard
+        </Link>
         {/* Analyze link removed */}
       </div>
 

@@ -567,7 +567,48 @@ export default function Simulations() {
       sharpeRatio: sharpeRatio !== null && isFinite(sharpeRatio) ? sharpeRatio.toFixed(2) : 'N/A',
       downPaymentAmount: formatCurrency(downPayment),
       appreciation: finalPropertyValue && purchasePrice ? formatCurrency(finalPropertyValue - purchasePrice) : '$0',
+      finalEquity: equityEachYear.length > 0 ? equityEachYear[equityEachYear.length - 1] : null,
     });
+
+    // Save calculated metrics to Supabase
+    (async () => {
+      const metricsToSave = {
+        irrCashFlow: irr,
+        irrTotal: totalIRR,
+        sharpeRatio,
+        equityMultiple,
+        finalValue: finalPropertyValue,
+        appreciation: finalPropertyValue - purchasePrice,
+        breakEvenYear,
+        totalCashFlow,
+        averageCashFlow,
+        negativeCashFlowYears,
+        averageDscr: averageDSCR,
+        yearsDscrBelow1_2: yearsDSCRUnder1_2,
+        finalEquity: equityEachYear.length > 0 ? equityEachYear[equityEachYear.length - 1] : null,
+        worstCashFlow: Math.min(...cashFlows),
+        maxDrawdownSim: Math.max(
+          ...equityEachYear.map((e, i) =>
+            i === 0 ? 0 : (equityEachYear[i - 1] - e) / equityEachYear[i - 1]
+          )
+        ),
+        minDscr: Math.min(...dscrEachYear),
+        maxLtv: Math.max(
+          ...equityEachYear.map((e, i) => {
+            const val =
+              propertyValue /
+              Math.pow(1 + appreciationRate / 100, loanTerm - 1 - i);
+            // reverse back to earlier values
+            return val ? 1 - e / val : 0;
+          })
+        ),
+      };
+
+      await supabase
+        .from('deals')
+        .update({ metrics: metricsToSave })
+        .eq('id', deal.id);
+    })();
   }
 
   // Simulate across all historical start years and compute summary metrics for each

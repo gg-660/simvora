@@ -218,7 +218,7 @@ export default function Deals() {
     return '$' + Math.round(val).toLocaleString();
   }
 
-  function calculateMetrics(deal) {
+  async function calculateMetrics(deal) {
     // Defensive: if no assumptions or missing values, don't calculate
     const loanTerm = parseFloat(assumptions.loanTerm);
     const inflationRate = parseFloat(assumptions.inflationRate); // Rent and expense inflation rate
@@ -388,6 +388,34 @@ export default function Deals() {
       downPaymentAmount: formatCurrency(downPayment),
       appreciation: finalPropertyValue && purchasePrice ? formatCurrency(finalPropertyValue - purchasePrice) : '$0',
     });
+
+    // Prepare metrics payload
+    const dealMetrics = {
+      irrCashFlow: irr,
+      irrTotal: totalIRR,
+      sharpeRatio: sharpeRatio,
+      equityMultiple: equityMultiple,
+      finalValue: finalPropertyValue,
+      appreciation: finalPropertyValue - purchasePrice,
+      breakEvenYear: breakEvenYear,
+      totalCashFlow: totalCashFlow,
+      averageCashFlow: averageCashFlow,
+      negativeCashFlowYears: negativeCashFlowYears,
+      averageDscr: averageDSCR,
+      yearsDscrBelow1_2: yearsDSCRUnder1_2,
+      worstCashFlow: Math.min(...cashFlows),
+      maxDrawdownSim: Math.max(...equityEachYear.map((e, i) => (i === 0 ? 0 : (equityEachYear[i - 1] - e) / equityEachYear[i - 1]))),
+      minDscr: Math.min(...dscrEachYear),
+      maxLtv: Math.max(...equityEachYear.map((e) => 1 - e / propertyValue))
+    };
+
+    // Save to Supabase
+    if (deal && deal.id) {
+      await supabase
+        .from('deals')
+        .update({ metrics: dealMetrics })
+        .eq('id', deal.id);
+    }
   }
 
   function calculateIRR(cashFlows) {
