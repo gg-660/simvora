@@ -11,7 +11,7 @@ function MetricCard({ title, value, assumptions, selectedDeal, onRecalculate }) 
     }
   }, [assumptions, selectedDeal]);
   return (
-    <div className="bg-[#1e1e1e] shadow-md rounded-lg p-6 flex flex-col items-center justify-center hover:shadow-xl transition">
+    <div className="bg-[#2a2a2a] shadow-md rounded-lg p-6 flex flex-col items-center justify-center hover:shadow-xl transition">
       <h3 className="text-md font-semibold text-gray-400 mb-2 text-center">{title}</h3>
       <p className="text-2xl font-bold text-white">{value}</p>
     </div>
@@ -79,7 +79,7 @@ export default function Deals() {
     setLoading(true);
     const { data, error } = await supabase
       .from('deals')
-      .select('id, deal_name, purchase_price, monthly_rent, monthly_expenses, created_at, user_id')
+      .select('id, deal_name, purchase_price, monthly_rent, monthly_expenses, created_at, user_id, scorecard_score')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -560,7 +560,9 @@ export default function Deals() {
                   tabIndex={0}
                   aria-label={`Select deal ${deal.deal_name}`}
                 >
-                  <span className="font-semibold text-sm truncate max-w-[8rem] text-gray-300" title={deal.deal_name}>{deal.deal_name}</span>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-semibold text-sm truncate max-w-[8rem] text-gray-300" title={deal.deal_name}>{deal.deal_name}</span>
+                  </div>
                   <div className="flex items-center ml-2 w-auto flex-shrink-0" style={{ minWidth: 0 }}>
                     <button
                       onClick={e => { e.stopPropagation(); handleEditDeal(deal); }}
@@ -716,8 +718,34 @@ export default function Deals() {
             minHeight: '100vh'
           }}
         >
-          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg p-6 mb-10 text-center">
-            <h2 className="text-3xl font-bold text-white">{selectedDeal?.deal_name || 'Selected Deal'}</h2>
+          <div className="bg-[#3a4151] text-white py-4 px-6 rounded-lg mb-10 text-center">
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <h2 className="text-3xl font-bold text-white">{selectedDeal?.deal_name || 'Selected Deal'}</h2>
+              {selectedDeal?.scorecard_score && (
+                <span
+                  className={`text-lg font-bold px-3 py-1 rounded ${
+                    selectedDeal.scorecard_score >= 90
+                      ? 'text-green-400 border border-green-400 bg-green-900/20'
+                      : selectedDeal.scorecard_score >= 80
+                      ? 'text-lime-400 border border-lime-400 bg-lime-900/20'
+                      : selectedDeal.scorecard_score >= 70
+                      ? 'text-yellow-300 border border-yellow-300 bg-yellow-900/20'
+                      : selectedDeal.scorecard_score >= 60
+                      ? 'text-orange-300 border border-orange-300 bg-orange-900/20'
+                      : 'text-red-500 border border-red-500 bg-red-900/20'
+                  }`}
+                >
+                  {(() => {
+                    const percent = selectedDeal.scorecard_score;
+                    if (percent >= 90) return 'A';
+                    if (percent >= 80) return 'B';
+                    if (percent >= 70) return 'C';
+                    if (percent >= 60) return 'D';
+                    return 'F';
+                  })()} ({selectedDeal.scorecard_score.toFixed(1)}%)
+                </span>
+              )}
+            </div>
           </div>
           {selectedDeal ? (
             <div>
@@ -731,7 +759,7 @@ export default function Deals() {
               </div>
 
               {/* Appreciation Metrics Section */}
-              <h3 className="text-lg font-bold mt-8 mb-4">Appreciation Metrics</h3>
+              <h3 className="text-lg font-bold text-gray-100 mt-8 mb-4">Appreciation Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10">
                 <MetricCard title="Final Property Value" value={metrics.finalPropertyValue} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
                 <MetricCard title="Appreciation ($)" value={metrics.appreciation} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
@@ -740,7 +768,7 @@ export default function Deals() {
               <hr className="my-8 border-[#2a2a2a]" />
 
               {/* IRR Metrics Section */}
-              <h3 className="text-lg font-bold mt-8 mb-4">IRR Metrics</h3>
+              <h3 className="text-lg font-bold text-gray-100 mt-8 mb-4">IRR Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 <MetricCard title="IRR of Cash Flow" value={metrics.irrOfCashFlow !== undefined && metrics.irrOfCashFlow !== null && metrics.irrOfCashFlow !== 'N/A' ? `${metrics.irrOfCashFlow}%` : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
                 <MetricCard title="Total IRR (with Appreciation)" value={metrics.totalIRRWithAppreciation !== undefined && metrics.totalIRRWithAppreciation !== null && metrics.totalIRRWithAppreciation !== 'N/A' ? `${metrics.totalIRRWithAppreciation}%` : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
@@ -751,7 +779,7 @@ export default function Deals() {
               <hr className="my-8 border-[#2a2a2a]" />
 
               {/* Cash Flow Metrics Section */}
-              <h3 className="text-lg font-bold mt-8 mb-4">Cash Flow Metrics</h3>
+              <h3 className="text-lg font-bold text-gray-100 mt-8 mb-4">Cash Flow Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
                 <MetricCard title="Total Cash Flow" value={metrics.totalCashFlow} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
                 <MetricCard title="Average Cash Flow" value={metrics.averageCashFlow} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
@@ -765,7 +793,7 @@ export default function Deals() {
               <hr className="my-8 border-[#2a2a2a]" />
 
               {/* Risk Metrics Section */}
-              <h3 className="text-lg font-bold mt-8 mb-4">Risk Metrics</h3>
+              <h3 className="text-lg font-bold text-gray-100 mt-8 mb-4">Risk Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 <MetricCard title="Average DSCR" value={metrics.averageDSCR !== undefined && metrics.averageDSCR !== null && metrics.averageDSCR !== 'N/A' ? metrics.averageDSCR : 'N/A'} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />
                 <MetricCard title="Years DSCR &lt; 1.2" value={metrics.yearsDSCRUnder1_2} assumptions={assumptions} selectedDeal={selectedDeal} onRecalculate={calculateMetrics} />

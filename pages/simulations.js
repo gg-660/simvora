@@ -217,7 +217,7 @@ export default function Simulations() {
     setLoading(true);
     const { data, error } = await supabase
       .from('deals')
-      .select('id, deal_name, purchase_price, monthly_rent, monthly_expenses, created_at, user_id')
+      .select('id, deal_name, purchase_price, monthly_rent, monthly_expenses, created_at, user_id, scorecard_score')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -871,8 +871,34 @@ export default function Simulations() {
             {/* Selected Deal label at top center (now styled card) */}
             {selectedDeal && (
               <div className="mb-6">
-                <div className="bg-[#475569] px-6 py-4 rounded-lg shadow-md text-2xl font-bold text-white text-center w-full">
-                  {selectedDeal.deal_name}
+                <div className="bg-[#475569] px-6 py-4 rounded-lg shadow-md text-2xl font-bold text-white text-center w-full flex justify-center items-center gap-4">
+                  <span className="flex items-center gap-3">
+                    {selectedDeal.deal_name}
+                    {selectedDeal.scorecard_score !== undefined && selectedDeal.scorecard_score !== null && (
+                      <span
+                        className={`text-lg font-bold px-3 py-1 rounded ${
+                          selectedDeal.scorecard_score >= 90
+                            ? 'text-green-400 border border-green-400 bg-green-900/20'
+                            : selectedDeal.scorecard_score >= 80
+                            ? 'text-lime-400 border border-lime-400 bg-lime-900/20'
+                            : selectedDeal.scorecard_score >= 70
+                            ? 'text-yellow-300 border border-yellow-300 bg-yellow-900/20'
+                            : selectedDeal.scorecard_score >= 60
+                            ? 'text-orange-300 border border-orange-300 bg-orange-900/20'
+                            : 'text-red-500 border border-red-500 bg-red-900/20'
+                        }`}
+                      >
+                        {(() => {
+                          const percent = selectedDeal.scorecard_score;
+                          if (percent >= 90) return 'A';
+                          if (percent >= 80) return 'B';
+                          if (percent >= 70) return 'C';
+                          if (percent >= 60) return 'D';
+                          return 'F';
+                        })()} ({selectedDeal.scorecard_score.toFixed(1)}%)
+                      </span>
+                    )}
+                  </span>
                 </div>
               </div>
             )}

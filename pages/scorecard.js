@@ -7,13 +7,13 @@ import { useRouter } from 'next/router';
 const normalizeMetrics = (rawMetrics, deal) => {
   const purchasePrice = deal?.purchase_price || 1;
   return {
-    irrCashFlow: rawMetrics.irrCashFlow / 100,
-    irrTotal: rawMetrics.irrTotal / 100,
-    appreciation: rawMetrics.appreciation / purchasePrice,
-    finalValue: rawMetrics.finalValue / purchasePrice,
-    totalCashFlow: rawMetrics.totalCashFlow / purchasePrice,
-    averageCashFlow: rawMetrics.averageCashFlow / purchasePrice,
-    worstCashFlow: rawMetrics.worstCashFlow / purchasePrice,
+    irrCashFlow: typeof rawMetrics.irrCashFlow === 'number' ? rawMetrics.irrCashFlow / 100 : null,
+    irrTotal: typeof rawMetrics.irrTotal === 'number' ? rawMetrics.irrTotal / 100 : null,
+    appreciation: typeof rawMetrics.appreciation === 'number' ? rawMetrics.appreciation / purchasePrice : null,
+    finalValue: typeof rawMetrics.finalValue === 'number' ? rawMetrics.finalValue / purchasePrice : null,
+    totalCashFlow: typeof rawMetrics.totalCashFlow === 'number' ? rawMetrics.totalCashFlow / purchasePrice : null,
+    averageCashFlow: typeof rawMetrics.averageCashFlow === 'number' ? rawMetrics.averageCashFlow / purchasePrice : null,
+    worstCashFlow: typeof rawMetrics.worstCashFlow === 'number' ? rawMetrics.worstCashFlow / purchasePrice : null,
     equityMultiple: rawMetrics.equityMultiple,
     sharpeRatio: rawMetrics.sharpeRatio,
     maxLtv: rawMetrics.maxLtv,
@@ -35,11 +35,22 @@ const normalizeMetrics = (rawMetrics, deal) => {
 // Utility function to calculate metric score (A=4, B=3, C=2, D=1, F=0)
 const calculateMetricScore = (value, thresholds) => {
   if (value == null || thresholds == null) return 0;
-  if (value >= thresholds.grade_a) return 4;
-  if (value >= thresholds.grade_b) return 3;
-  if (value >= thresholds.grade_c) return 2;
-  if (value >= thresholds.grade_d) return 1;
-  return 0;
+  // For metrics where lower is better (e.g., yearsDscrBelow1_2, negativeCashFlowYears, maxLtv, maxDrawdownSim, etc.)
+  // We need to check if the thresholds are in ascending or descending order.
+  // If grade_a < grade_d, then lower is better.
+  if (thresholds.grade_a < thresholds.grade_d) {
+    if (value <= thresholds.grade_a) return 4;
+    if (value <= thresholds.grade_b) return 3;
+    if (value <= thresholds.grade_c) return 2;
+    if (value <= thresholds.grade_d) return 1;
+    return 0;
+  } else {
+    if (value >= thresholds.grade_a) return 4;
+    if (value >= thresholds.grade_b) return 3;
+    if (value >= thresholds.grade_c) return 2;
+    if (value >= thresholds.grade_d) return 1;
+    return 0;
+  }
 };
 import { supabase } from '@/lib/supabaseClient';
 
@@ -105,35 +116,60 @@ export default function Scorecard() {
   useEffect(() => {
     const fetchPresets = async () => {
       const { data: user } = await supabase.auth.getUser();
+      const userId = user?.data?.user?.id;
+
       const { data, error } = await supabase
         .from('Scorecard Presets')
         .select('*')
-        .eq('user_id', user?.data?.user?.id);
+        .or(`user_id.eq.${userId},user_id.is.null`); // Fetch both user and default presets
+
       if (!error && data) {
         setPresets(data);
+      } else {
+        console.error('Failed to fetch presets:', error);
       }
     };
+
     fetchPresets();
   }, []);
 
   // Save a new preset
   const savePreset = async () => {
     const { data: user } = await supabase.auth.getUser();
+    const userId = user?.user?.id;
+
+    if (!newPresetName || newPresetName.trim().toLowerCase() === 'default') {
+      console.warn('Cannot save preset with reserved name "Default".');
+      return;
+    }
+
     const payload = {
-      user_id: user?.data?.user?.id,
-      name: newPresetName,
+      user_id: userId,
+      name: newPresetName.trim(),
       thresholds,
       weights,
     };
-    await supabase.from('Scorecard Presets').insert(payload);
+
+    const { error: insertError } = await supabase
+      .from('scorecard_presets')
+      .insert([payload]); // insert expects an array
+
+    if (insertError) {
+      console.error('Preset insert error:', insertError);
+      return;
+    }
+
     setNewPresetName('');
-    // Refresh presets after insert
-    const { data, error } = await supabase
-      .from('Scorecard Presets')
+
+    const { data: refreshedPresets, error: refreshError } = await supabase
+      .from('scorecard_presets')
       .select('*')
-      .eq('user_id', user?.data?.user?.id);
-    if (!error && data) {
-      setPresets(data);
+      .or(`user_id.eq.${userId},user_id.is.null`);
+
+    if (!refreshError && refreshedPresets) {
+      setPresets(refreshedPresets);
+    } else {
+      console.error('Failed to refresh presets after insert:', refreshError);
     }
   };
 
@@ -143,10 +179,24 @@ export default function Scorecard() {
     setWeights(preset.weights);
     setSelectedPreset(preset);
   };
+
+  // Delete a preset by id
+  const deletePreset = async (presetId) => {
+    const { error } = await supabase
+      .from('Scorecard Presets')
+      .delete()
+      .eq('id', presetId);
+
+    if (error) {
+      console.error('Failed to delete preset:', error);
+    } else {
+      setPresets((prev) => prev.filter((p) => p.id !== presetId));
+    }
+  };
   const defaultThresholdMap = {
-    // IRR Metrics (updated: IRR cash flow more lenient, IRR/property value stricter)
-    irrCashFlow: { grade_a: 0.12, grade_b: 0.09, grade_c: 0.06, grade_d: 0.04 },
-    irrTotal: { grade_a: 0.25, grade_b: 0.20, grade_c: 0.15, grade_d: 0.10 },
+    // IRR Metrics (updated: slightly more lenient for typical deal)
+    irrCashFlow: { grade_a: 0.07, grade_b: 0.05, grade_c: 0.035, grade_d: 0.025 },
+    irrTotal: { grade_a: 0.16, grade_b: 0.13, grade_c: 0.10, grade_d: 0.08 },
     irrSpread: { grade_a: 0.05, grade_b: 0.08, grade_c: 0.10, grade_d: 0.12 },
     medianIrr: { grade_a: 0.18, grade_b: 0.15, grade_c: 0.12, grade_d: 0.08 },
     irr5PercentThreshold: { grade_a: 85, grade_b: 75, grade_c: 60, grade_d: 45 },
@@ -156,15 +206,15 @@ export default function Scorecard() {
     irr20: { grade_a: 0.15, grade_b: 0.13, grade_c: 0.10, grade_d: 0.07 },
     irr25: { grade_a: 0.16, grade_b: 0.14, grade_c: 0.11, grade_d: 0.08 },
 
-    // Cash Flow Metrics (stricter)
-    totalCashFlow: { grade_a: 0.75, grade_b: 0.6, grade_c: 0.45, grade_d: 0.3 },
-    averageCashFlow: { grade_a: 0.03, grade_b: 0.02, grade_c: 0.01, grade_d: 0.005 },
+    // Cash Flow Metrics (slightly more lenient for typical deal)
+    totalCashFlow: { grade_a: 0.35, grade_b: 0.25, grade_c: 0.15, grade_d: 0.05 },
+    averageCashFlow: { grade_a: 0.012, grade_b: 0.008, grade_c: 0.004, grade_d: 0.002 },
     worstCashFlow: { grade_a: 0, grade_b: -0.01, grade_c: -0.02, grade_d: -0.03 },
-    negativeCashFlowYears: { grade_a: 0, grade_b: 1, grade_c: 3, grade_d: 5 },
+    negativeCashFlowYears: { grade_a: 0, grade_b: 2, grade_c: 4, grade_d: 6 },
     sdCashFlow: { grade_a: 0.002, grade_b: 0.004, grade_c: 0.006, grade_d: 0.008 },
 
     // Leverage
-    maxLtv: { grade_a: 0.75, grade_b: 0.8, grade_c: 0.85, grade_d: 0.90 }, // more lenient
+    maxLtv: { grade_a: 0.82, grade_b: 0.87, grade_c: 0.92, grade_d: 0.97 }, // significantly more lenient for simulation-based
     averageLtv: { grade_a: 0.65, grade_b: 0.7, grade_c: 0.75, grade_d: 0.8 },
     finalLtv: { grade_a: 0.65, grade_b: 0.7, grade_c: 0.75, grade_d: 0.8 },
     debtYield: { grade_a: 0.12, grade_b: 0.10, grade_c: 0.08, grade_d: 0.06 },
@@ -173,27 +223,27 @@ export default function Scorecard() {
     // Drawdown
     maxDrawdownEquity: { grade_a: 0.10, grade_b: 0.15, grade_c: 0.22, grade_d: 0.3 },
     maxDrawdownValue: { grade_a: 0.10, grade_b: 0.15, grade_c: 0.22, grade_d: 0.3 },
-    maxDrawdownSim: { grade_a: 0.15, grade_b: 0.22, grade_c: 0.28, grade_d: 0.35 }, // more lenient
+    maxDrawdownSim: { grade_a: 0.25, grade_b: 0.32, grade_c: 0.40, grade_d: 0.48 }, // significantly more lenient for simulation-based
 
-    // Equity Performance (stricter)
-    breakEvenEquity: { grade_a: 5, grade_b: 7, grade_c: 9, grade_d: 12 },
-    finalEquity: { grade_a: 0.5, grade_b: 0.4, grade_c: 0.3, grade_d: 0.2 },
+    // Equity Performance (more lenient break-even, equity multiple)
+    breakEvenEquity: { grade_a: 8, grade_b: 11, grade_c: 14, grade_d: 17 },
+    finalEquity: { grade_a: 0.4, grade_b: 0.35, grade_c: 0.25, grade_d: 0.15 },
     cumulativeEquityBuilt: { grade_a: 1.5, grade_b: 1.3, grade_c: 1.1, grade_d: 0.9 },
-    equityMultiple: { grade_a: 2.0, grade_b: 1.75, grade_c: 1.5, grade_d: 1.25 },
+    equityMultiple: { grade_a: 1.6, grade_b: 1.4, grade_c: 1.2, grade_d: 1.0 },
     annualizedReturn: { grade_a: 0.12, grade_b: 0.10, grade_c: 0.08, grade_d: 0.06 },
 
     // DSCR Risk
-    yearsDscrBelow1_2: { grade_a: 0, grade_b: 1, grade_c: 3, grade_d: 6 },
+    yearsDscrBelow1_2: { grade_a: 0, grade_b: 1, grade_c: 3, grade_d: 5 },
     yearsDscrBelow1_2_sim: { grade_a: 0, grade_b: 1, grade_c: 3, grade_d: 5 },
-    minDscr: { grade_a: 1.35, grade_b: 1.25, grade_c: 1.15, grade_d: 1.05 },
+    minDscr: { grade_a: 1.10, grade_b: 1.00, grade_c: 0.90, grade_d: 0.80 }, // significantly more lenient for simulation-based
 
     // Property Value (stricter)
     finalValue: { grade_a: 2.5, grade_b: 2.3, grade_c: 2.1, grade_d: 1.9 },
     appreciation: { grade_a: 1.5, grade_b: 1.2, grade_c: 1.0, grade_d: 0.8 },
 
-    // Sharpe & Risk (stricter)
+    // Sharpe & Risk (more lenient Sharpe)
     averageDscr: { grade_a: 1.5, grade_b: 1.3, grade_c: 1.1, grade_d: 0.9 },
-    sharpeRatio: { grade_a: 2.0, grade_b: 1.5, grade_c: 1.0, grade_d: 0.5 },
+    sharpeRatio: { grade_a: 1.5, grade_b: 1.2, grade_c: 1.0, grade_d: 0.8 },
   };
 
   // Finalized weights: all values are whole numbers and the total equals 100%
@@ -230,6 +280,42 @@ export default function Scorecard() {
   const finalScore = metricValues
     ? calculateWeightedScore(weights, metricValues, thresholds, defaultThresholdMap, defaultThresholds)
     : null;
+
+  // Persist scorecard_score to Supabase whenever it changes
+  useEffect(() => {
+    if (!selectedDeal || !selectedDeal.id || !Number.isFinite(finalScore)) return;
+    console.log('Updating scorecard_score', {
+      finalScore,
+      percent: Math.round((finalScore / 400) * 1000) / 10,
+      selectedDealId: selectedDeal?.id,
+    });
+
+    const percent = Math.round((finalScore / 400) * 1000) / 10;
+
+    supabase
+      .from('deals')
+      .update({
+        scorecard_score: percent,
+      })
+      .eq('id', selectedDeal.id)
+      .then(({ error }) => {
+        if (error) {
+          console.error('Failed to update scorecard fields', error);
+        } else {
+          // Update the local userDeals state immediately so sidebar reflects new score
+          setUserDeals((prevDeals) =>
+            prevDeals.map((deal) =>
+              deal.id?.toString() === selectedDeal.id?.toString()
+                ? {
+                    ...deal,
+                    scorecard_score: percent,
+                  }
+                : deal
+            )
+          );
+        }
+      });
+  }, [finalScore, dealId, weights, thresholds, userDeals]);
 
   useEffect(() => {
     if (selectedMetric) {
@@ -505,19 +591,51 @@ export default function Scorecard() {
             </div>
             */}
             <div className="grid grid-cols-1 gap-4">
-              {presets.map((preset) => (
-                <div
-                  key={preset.id}
-                  className={`p-4 rounded-md shadow border cursor-pointer ${
-                    selectedPreset?.id === preset.id
-                      ? 'bg-blue-800 border-blue-400 ring-2 ring-blue-300'
-                      : 'bg-[#2a2a2a] border-[#333] hover:bg-[#3a3a3a]'
-                  }`}
-                  onClick={() => loadPreset(preset)}
-                >
-                  <h3 className="text-white font-semibold text-lg mb-1">{preset.name}</h3>
-                  <p className="text-gray-400 text-sm">Click to load preset</p>
+              {/* Static Default Preset Card */}
+              <div
+                className={`cursor-pointer p-4 border rounded-md transition-all duration-200 ${
+                  selectedPreset?.user_id === null && selectedPreset?.name === 'Default'
+                    ? 'bg-blue-800 border-blue-400 ring-2 ring-blue-300'
+                    : 'bg-[#232323] border-[#333] hover:bg-[#2c2c2c]'
+                }`}
+                onClick={() => {
+                  const defaultPreset = presets.find(p => p.name === 'Default' && p.user_id === null);
+                  if (defaultPreset) loadPreset(defaultPreset);
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <h3 className="text-white font-semibold text-lg">Default</h3>
                 </div>
+              </div>
+              {/* User-defined presets */}
+              {presets
+                .filter(p => !(p.name === 'Default' && p.user_id === null))
+                .map((preset) => (
+                  <div
+                    key={preset.id}
+                    className={`cursor-pointer p-4 border rounded-md transition-all duration-200 ${
+                      selectedPreset?.id === preset.id
+                        ? 'bg-blue-800 border-blue-400 ring-2 ring-blue-300'
+                        : 'bg-[#232323] border-[#333] hover:bg-[#2c2c2c]'
+                    }`}
+                    onClick={() => loadPreset(preset)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-white font-semibold text-lg">{preset.name}</h3>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deletePreset(preset.id);
+                        }}
+                        className="ml-1 text-gray-400 hover:text-red-400 transition-all"
+                        title="Delete preset"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M6.707 5.293a1 1 0 00-1.414 1.414L8.586 10l-3.293 3.293a1 1 0 001.414 1.414L10 11.414l3.293 3.293a1 1 0 001.414-1.414L11.414 10l3.293-3.293a1 1 0 00-1.414-1.414L10 8.586 6.707 5.293z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
               ))}
             </div>
           </div>
@@ -535,7 +653,33 @@ export default function Scorecard() {
                       : 'bg-[#232323] border-[#333] hover:bg-[#2c2c2c]'
                   }`}
                 >
-                  <p className="text-md font-semibold text-white truncate">{deal.deal_name}</p>
+                  <div className="flex justify-between items-center">
+                    <p className="text-md font-semibold text-white truncate">{deal.deal_name}</p>
+                    {deal.scorecard_score && (
+                      <span
+                        className={`ml-2 text-sm font-bold px-2 py-1 rounded ${
+                          deal.scorecard_score >= 90
+                            ? 'text-green-400 border border-green-400 bg-green-900/20'
+                            : deal.scorecard_score >= 80
+                            ? 'text-lime-400 border border-lime-400 bg-lime-900/20'
+                            : deal.scorecard_score >= 70
+                            ? 'text-yellow-300 border border-yellow-300 bg-yellow-900/20'
+                            : deal.scorecard_score >= 60
+                            ? 'text-orange-300 border border-orange-300 bg-orange-900/20'
+                            : 'text-red-500 border border-red-500 bg-red-900/20'
+                        }`}
+                      >
+                        {(() => {
+                          const percent = deal.scorecard_score;
+                          if (percent >= 90) return 'A';
+                          if (percent >= 80) return 'B';
+                          if (percent >= 70) return 'C';
+                          if (percent >= 60) return 'D';
+                          return 'F';
+                        })()}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -609,9 +753,9 @@ export default function Scorecard() {
           {/* Simulation Metrics section */}
           <h3 className="text-xl font-bold text-gray-300 mt-8 mb-2">Simulation Metrics</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-min">
-            <div>{renderGroup('simulationOne', weights.simulationOne)}</div>
-            <div>{renderGroup('simulationTwo', weights.simulationTwo)}</div>
-            <div>{renderGroup('simulationThree', weights.simulationThree)}</div>
+            {['simulationOne', 'simulationTwo', 'simulationThree'].map((groupKey) => (
+              <div key={groupKey}>{renderGroup(groupKey, weights[groupKey])}</div>
+            ))}
           </div>
           {totalWeight !== 100 && (
             <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded shadow-md z-50">
