@@ -2,7 +2,6 @@ import Navbar from '@/components/Navbar';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { supabase } from '@/lib/supabaseClient';
 
 // Normalize metrics for scorecard calculation
 const normalizeMetrics = (rawMetrics, deal) => {
@@ -53,7 +52,6 @@ const calculateMetricScore = (value, thresholds) => {
     return 0;
   }
 };
-import { supabase } from '@/lib/supabaseClient';
 
 // Calculate total weighted score out of 400
 const calculateWeightedScore = (weights, metricValues, thresholds, defaultThresholdMap, defaultThresholds) => {
