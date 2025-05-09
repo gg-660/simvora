@@ -71,17 +71,20 @@ const calculateWeightedScore = (weights, metricValues, thresholds, defaultThresh
 
 export default function Scorecard() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const protectPage = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) {
-        router.replace('/login'); // redirect to login if unauthenticated
+        router.replace('/login');
+      } else {
+        setLoading(false);
       }
     };
-
     protectPage();
   }, []);
+  if (loading) return null;
   // Preset state
   const [presets, setPresets] = useState([]);
   const [selectedPreset, setSelectedPreset] = useState(null);
