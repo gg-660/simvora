@@ -2,6 +2,7 @@ import Navbar from '@/components/Navbar';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabaseClient';
 
 // Normalize metrics for scorecard calculation
 const normalizeMetrics = (rawMetrics, deal) => {
@@ -71,16 +72,37 @@ const calculateWeightedScore = (weights, metricValues, thresholds, defaultThresh
 };
 
 export default function Scorecard() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const protectPage = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        router.replace('/login'); // redirect to login if unauthenticated
+      }
+    };
+
+    protectPage();
+  }, []);
   // Preset state
   const [presets, setPresets] = useState([]);
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [newPresetName, setNewPresetName] = useState('');
   const [userDeals, setUserDeals] = useState([]);
-  const router = useRouter();
+  // const router = useRouter();
   // Extract dealId from query and find selectedDeal
   const { dealId } = router.query;
   // Ensure selectedDeal is found even if deal.id is a UUID and dealId is a string
   const selectedDeal = userDeals.find(deal => deal.id?.toString() === dealId);
+
+  // Clean up the URL by removing dealId from the query once the deal is loaded
+  useEffect(() => {
+    if (dealId && selectedDeal) {
+      const url = new URL(window.location);
+      url.searchParams.delete('dealId');
+      window.history.replaceState({}, '', url.pathname);
+    }
+  }, [dealId, selectedDeal]);
 
   useEffect(() => {
     const fetchDeals = async () => {
