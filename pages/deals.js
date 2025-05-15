@@ -63,16 +63,17 @@ export default function Deals() {
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    async function checkUser() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login?mode=login');
-      } else {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
         setUserId(session.user.id);
         fetchDeals(session.user.id);
+      } else {
+        router.replace('/login');
       }
-    }
-    checkUser();
+    };
+
+    checkSession();
   }, []);
 
   async function fetchDeals(userId) {

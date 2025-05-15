@@ -200,17 +200,17 @@ export default function Simulations() {
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setExpiredSession(true);
-        router.push('/login');
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserId(session.user.id);
+        fetchDeals(session.user.id);
       } else {
-        setUserId(user.id);
-        fetchDeals(user.id);
+        setExpiredSession(true);
+        router.replace('/login');
       }
-    }
-    checkUser();
+    };
+    checkSession();
   }, []);
 
   async function fetchDeals(userId) {
@@ -745,6 +745,54 @@ export default function Simulations() {
 
     setYearlySimulationResults(resultsByYear);
     console.log("Year-by-year simulations:", resultsByYear);
+
+    // Save simulation summary metrics
+    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+
+    const irrCFVals = resultsByYear.map(r => parseFloat(r.irrCF)).filter(v => !isNaN(v));
+    const irrTotalVals = resultsByYear.map(r => parseFloat(r.irrTotal)).filter(v => !isNaN(v));
+    const equityMultipleVals = resultsByYear.map(r => parseFloat(r.equityMultiple)).filter(v => !isNaN(v));
+    const avgCFVals = resultsByYear.map(r => parseFloat(r.averageCF)).filter(v => !isNaN(v));
+    const totalCFVals = resultsByYear.map(r => parseFloat(r.totalCF)).filter(v => !isNaN(v));
+    const worstCFVals = resultsByYear.map(r => parseFloat(r.worstCF)).filter(v => !isNaN(v));
+    const sharpeVals = resultsByYear.map(r => parseFloat(r.sharpeRatio)).filter(v => !isNaN(v));
+    const finalValues = resultsByYear.map(r => parseFloat(r.finalValue)).filter(v => !isNaN(v));
+    const minDSCRVals = resultsByYear.map(r => parseFloat(r.minDSCR)).filter(v => !isNaN(v));
+    const maxLTVVals = resultsByYear.map(r => parseFloat(r.maxLTV)).filter(v => !isNaN(v));
+    const meanDSCRVals = resultsByYear.map(r => parseFloat(r.meanDSCR)).filter(v => !isNaN(v));
+    const maxDrawdownValueVals = resultsByYear.map(r => parseFloat(r.maxDrawdownValue)).filter(v => !isNaN(v));
+    const maxDrawdownEquityVals = resultsByYear.map(r => parseFloat(r.maxDrawdownEquity)).filter(v => !isNaN(v));
+    const yearsDSCRUnder1_2Vals = resultsByYear.map(r => parseFloat(r.yearsDSCRUnder1_2)).filter(v => !isNaN(v));
+    const finalEquityVals = resultsByYear.map(r => parseFloat(r.finalEquity)).filter(v => !isNaN(v));
+
+    // Use distinct keys for simulation summary metrics to avoid overlap with base metrics
+    const summary = {
+      irrCFSim: avg(irrCFVals),
+      irrTotalSim: avg(irrTotalVals),
+      equityMultipleSim: avg(equityMultipleVals),
+      averageCFSim: avg(avgCFVals),
+      totalCFSim: avg(totalCFVals),
+      worstCFSim: avg(worstCFVals),
+      sharpeRatioSim: avg(sharpeVals),
+      finalValueSim: avg(finalValues),
+      minDSCRSim: avg(minDSCRVals),
+      maxLTVSim: avg(maxLTVVals),
+      meanDSCRSim: avg(meanDSCRVals),
+      maxDrawdownValueSim: avg(maxDrawdownValueVals),
+      maxDrawdownEquitySim: avg(maxDrawdownEquityVals),
+      yearsDSCRUnder1_2Sim: avg(yearsDSCRUnder1_2Vals),
+      finalEquitySim: avg(finalEquityVals)
+    };
+
+    // Save to Supabase (await and log result)
+    if (selectedDeal && selectedDeal.id) {
+      (async () => {
+        await supabase
+          .from('deals')
+          .update({ simulation_metrics: summary })
+          .eq('id', selectedDeal.id);
+      })();
+    }
   }
 
   function calculateIRR(cashFlows) {

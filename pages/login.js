@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Navbar from '@/components/Navbar';
 import { useRouter } from 'next/router';
@@ -9,25 +9,44 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  async function handleLogin(e) {
-    e.preventDefault();
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.replace('/deals');
+      }
+    };
+    checkSession();
+  }, []);
+
+  async function handleLogin() {
     setError('');
+    setLoading(true);
 
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+    console.log('Attempting login with:', { email, password });
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    const result = await res.json();
+    console.log('Login result:', { data, error });
 
-    if (!res.ok) {
-      setError(result.error || 'Login failed');
+    setLoading(false);
+
+    if (error) {
+      setError(error.message || 'Login failed');
       return;
     }
 
-    router.push('/deals'); // Redirect after successful login
+    if (data.session) {
+      console.log('Login successful, redirecting...');
+      router.replace('/deals');
+    } else {
+      setError('Login succeeded but no session found.');
+    }
   }
 
   return (
@@ -38,7 +57,13 @@ export default function Login() {
           Login to Your Account
         </h1>
 
-        <form onSubmit={handleLogin} className="bg-[#1e1e1e] p-8 rounded-lg shadow-md w-full max-w-sm">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleLogin();
+          }}
+          className="bg-[#1e1e1e] p-8 rounded-lg shadow-md w-full max-w-sm"
+        >
           <div className="mb-6">
             <label className="block mb-2 font-semibold text-gray-300" htmlFor="email">
               Email
@@ -71,9 +96,10 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full bg-[#475569] text-white font-semibold py-3 rounded-md hover:bg-[#3b4a5a] transition"
+            disabled={loading}
+            className="w-full bg-[#475569] text-white font-semibold py-3 rounded-md hover:bg-[#3b4a5a] transition disabled:opacity-50"
           >
-            Log In
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 

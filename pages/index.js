@@ -78,6 +78,11 @@ export default function Home() {
             Try the Simulator
           </Link>
         </section>
+        <footer className="bg-black text-gray-500 text-sm text-center py-6">
+          <Link href="/privacy" className="hover:underline text-gray-400">
+            Privacy Policy
+          </Link>
+        </footer>
       </main>
     </>
   );
