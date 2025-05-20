@@ -183,8 +183,12 @@ export default function Scorecard() {
     negativeCashFlowYears: 4
   });
   // Track selected preset for Weight Presets and Threshold Presets independently
-  const [selectedWeightPreset, setSelectedWeightPreset] = useState('default');
-  const [selectedThresholdPreset, setSelectedThresholdPreset] = useState('default-thresholds');
+  const [selectedWeightPreset, setSelectedWeightPreset] = useState('Default');
+  const [selectedThresholdPreset, setSelectedThresholdPreset] = useState('Default Thresholds');
+
+  // State for user presets
+  const [userWeightPresets, setUserWeightPresets] = useState([]);
+  const [userThresholdPresets, setUserThresholdPresets] = useState([]);
   // State for expanded section edit overlay
   const [expandedSection, setExpandedSection] = useState(null);
   // Add thresholds state, initialized with default grade bands for each metric
@@ -243,27 +247,48 @@ export default function Scorecard() {
     checkSession();
   }, []);
 
-  // Fetch saved presets for current user from Supabase on mount
+  // Fetch user weight and threshold presets from Supabase, removing duplicates and normalizing names
   useEffect(() => {
     const fetchPresets = async () => {
       if (!userId) return;
 
-      const { data: weightPreset } = await supabase
-        .from('presets')
-        .select('data')
-        .eq('user_id', userId)
-        .eq('preset_type', 'weights')
-        .single();
+      const { data: weightPresets } = await supabase
+        .from('weight_presets')
+        .select('*')
+        .eq('user_id', userId);
 
-      const { data: thresholdPreset } = await supabase
-        .from('presets')
-        .select('data')
-        .eq('user_id', userId)
-        .eq('preset_type', 'thresholds')
-        .single();
+      const { data: thresholdPresets } = await supabase
+        .from('threshold_presets')
+        .select('*')
+        .eq('user_id', userId);
 
-      if (weightPreset?.data) setWeights(weightPreset.data);
-      if (thresholdPreset?.data) setThresholds(thresholdPreset.data);
+      // Deduplicate and normalize names, and filter out exact duplicate (name + data) entries
+      const deduplicate = (presets) => {
+        const seen = new Map();
+
+        return presets.filter(preset => {
+          let name = preset.name;
+
+          // Parse JSON-encoded names if needed
+          try {
+            const parsed = JSON.parse(name);
+            if (parsed?.name) name = parsed.name;
+          } catch {}
+
+          name = String(name).trim().toLowerCase();
+
+          const key = name + JSON.stringify(preset.data);
+
+          if (seen.has(key)) return false;
+          seen.set(key, true);
+
+          preset.name = name;
+          return true;
+        });
+      };
+
+      if (weightPresets) setUserWeightPresets(deduplicate(weightPresets));
+      if (thresholdPresets) setUserThresholdPresets(deduplicate(thresholdPresets));
     };
     fetchPresets();
   }, [userId]);
@@ -415,47 +440,40 @@ export default function Scorecard() {
       <Navbar />
       <div className="flex min-h-screen bg-[#121212] text-white">
         <Sidebar
-          weightPresets={[{ name: 'Default' }]}
-          thresholdPresets={[{ name: 'Default Thresholds' }]}
-          selectedWeightPreset={{ name: selectedWeightPreset }}
-          selectedThresholdPreset={{ name: selectedThresholdPreset }}
-          onSelectWeightPreset={() => {
-            setSelectedWeightPreset('default');
-            setWeights({
-              irrCashFlow: 5,
-              irrTotal: 5,
-              appreciation: 5,
-              finalValue: 5,
-              irrCFSim: 4,
-              irrTotalSim: 4,
-              totalCashFlow: 4,
-              averageCashFlow: 5,
-              equityMultiple: 2,
-              averageCFSim: 5,
-              totalCFSim: 4,
-              breakEvenYear: 4,
-              finalEquity: 2,
-              finalEquitySim: 2,
-              maxLtv: 3,
-              maxLtvSim: 3,
-              averageDscr: 3,
-              minDscr: 3,
-              yearsDscrBelow1_2: 3,
-              minDSCRSim: 3,
-              yearsDSCRUnder1_2Sim: 3,
-              sharpeRatio: 5,
-              sharpeRatioSim: 5,
-              maxDrawdownValueSim: 1,
-              maxDrawdownEquitySim: 1,
-              worstCashFlow: 4,
-              worstCFSim: 4,
-              negativeCFYearsSim: 4,
-              negativeCashFlowYears: 4
-            });
+          weightPresets={[
+            { name: 'Default', data: weights },
+            ...userWeightPresets
+          ]}
+          thresholdPresets={[
+            { name: 'Default Thresholds', data: defaultThresholdMap },
+            ...userThresholdPresets
+          ]}
+          selectedWeightPreset={selectedWeightPreset}
+          selectedThresholdPreset={selectedThresholdPreset}
+          onSelectWeightPreset={(preset) => {
+            setSelectedWeightPreset(preset.name);
+            if (preset.name === 'Default') {
+              setWeights({
+                irrCashFlow: 5, irrTotal: 5, appreciation: 5, finalValue: 5,
+                irrCFSim: 4, irrTotalSim: 4, totalCashFlow: 4, averageCashFlow: 5,
+                equityMultiple: 2, averageCFSim: 5, totalCFSim: 4, breakEvenYear: 4,
+                finalEquity: 2, finalEquitySim: 2, maxLtv: 3, maxLtvSim: 3,
+                averageDscr: 3, minDscr: 3, yearsDscrBelow1_2: 3, minDSCRSim: 3,
+                yearsDSCRUnder1_2Sim: 3, sharpeRatio: 5, sharpeRatioSim: 5,
+                maxDrawdownValueSim: 1, maxDrawdownEquitySim: 1,
+                worstCashFlow: 4, worstCFSim: 4, negativeCFYearsSim: 4, negativeCashFlowYears: 4
+              });
+            } else {
+              setWeights(preset.data);
+            }
           }}
-          onSelectThresholdPreset={() => {
-            setSelectedThresholdPreset('default-thresholds');
-            setThresholds(defaultThresholdMap);
+          onSelectThresholdPreset={(preset) => {
+            setSelectedThresholdPreset(preset.name);
+            if (preset.name === 'Default Thresholds') {
+              setThresholds(defaultThresholdMap);
+            } else {
+              setThresholds(preset.data);
+            }
           }}
           deals={userDeals}
           selectedDealId={dealIdFromQuery}
@@ -464,6 +482,10 @@ export default function Scorecard() {
             (sum, [section, keys]) => sum + keys.reduce((acc, key) => acc + (weights[key] ?? 0), 0),
             0
           )}
+          setUserWeightPresets={setUserWeightPresets}
+          setUserThresholdPresets={setUserThresholdPresets}
+          weights={weights}
+          thresholds={thresholds}
         />
 
         {/* Main Content */}
