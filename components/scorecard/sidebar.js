@@ -52,7 +52,7 @@ export default function Sidebar({
   const defaultThresholdPresetNames = ['default thresholds'];
 
   return (
-    <div className="bg-[#1e1e1e] w-full md:w-64 flex-shrink-0 p-4 space-y-8 text-white">
+    <div className="bg-[#1e1e1e] w-full md:w-80 flex-shrink-0 p-4 space-y-8 text-white">
       <div>
         <h2 className="text-lg font-semibold mb-2">Weight Presets</h2>
         <div className="space-y-2">

@@ -25,7 +25,8 @@ export default function Deals() {
     monthlyRent: '',
     monthlyExpenses: '',
   });
-  const [showAssumptions, setShowAssumptions] = useState(false);  // State for toggling the assumptions sidebar
+  const [showAssumptions, setShowAssumptions] = useState(false);  // State for toggling the assumptions section
+  const [showSidebar, setShowSidebar] = useState(false);          // State for toggling the entire sidebar
   const [assumptions, setAssumptions] = useState({
     downPayment: 20,        // Default 20%
     interestRate: 5,        // Default 5%
@@ -450,38 +451,159 @@ export default function Deals() {
       <div
         className="flex min-h-screen relative bg-[#121212] text-gray-300"
       >
-        {/* Main Sidebar (Deal Form) */}
-        <aside
-          className="p-6 z-30 bg-[#1e1e1e] text-gray-300"
+        {/* Sidebar Drawer: All sidebar content (deal form, saved deals, assumptions) */}
+        <div
+          className={`md:flex ${showSidebar ? 'block' : 'hidden'} md:block fixed md:relative bg-[#1e1e1e] text-gray-300 p-6 pb-44 z-50`}
           style={{
-            position: 'fixed',
-            top: '4rem', 
+            top: '4rem',
             left: 0,
-            width: '20rem',
-            height: 'calc(100vh - 4rem)', 
-            boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
-            paddingTop: 0,
-            borderRight: '2px solid #2a2a2a',
-            zIndex: 50,
+            width: '100%',
+            maxWidth: '100%',
+            height: '100vh',
             overflowY: 'auto',
-            paddingRight: '10px',
-            display: 'flex',
+            boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.5)',
+            transition: 'transform 0.3s ease-in-out',
+            position: 'fixed',
             flexDirection: 'column',
-            boxSizing: 'border-box',
+            borderRight: '2px solid #2a2a2a',
+            paddingRight: '10px',
+            zIndex: 50,
+            ...(typeof window !== 'undefined' && window.innerWidth >= 768
+              ? {
+                  width: '20rem',
+                  maxWidth: '20rem',
+                  top: '4rem',
+                  height: 'calc(100vh - 4rem)',
+                  position: 'fixed',
+                }
+              : {}),
           }}
         >
+          {/* Toggle Assumptions Section (not entire drawer) */}
           <button
             onClick={handleToggleAssumptions}
             className="w-full bg-[#2a2a2a] hover:bg-[#475569] text-white font-semibold py-3 rounded-md transition mb-4"
             style={{
               position: 'relative',
               zIndex: 50,
-              marginTop: '30px',   
-              marginBottom: '30px', 
+              marginTop: '30px',
+              marginBottom: '30px',
             }}
           >
             Assumptions and Deal Inputs
           </button>
+          {/* Animated Assumptions Overlay */}
+          <div className="relative z-[100]">
+            <div
+              className={`fixed inset-0 bg-[#121212] text-gray-300 pt-24 px-6 pb-20 overflow-y-auto transition-transform duration-300 ease-out transform ${
+                showAssumptions ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'
+              }`}
+              style={{
+                width: '100%',
+                height: '100vh',
+                top: 0,
+                left: 0,
+                zIndex: 100,
+              }}
+            >
+              <h2 className="text-2xl font-bold mb-6 text-center">Assumptions and Deal Inputs</h2>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="downPayment" className="block font-semibold text-gray-300">Down Payment (%)</label>
+                  <input
+                    type="number"
+                    id="downPayment"
+                    name="downPayment"
+                    value={assumptions.downPayment}
+                    onChange={handleAssumptionChange}
+                    className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                    placeholder="Ex: 20"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="interestRate" className="block font-semibold text-gray-300">Interest Rate (%)</label>
+                  <input
+                    type="number"
+                    id="interestRate"
+                    name="interestRate"
+                    value={assumptions.interestRate}
+                    onChange={handleAssumptionChange}
+                    className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                    placeholder="Ex: 5"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="loanTerm" className="block font-semibold text-gray-300">Loan Term (Years)</label>
+                  <input
+                    type="number"
+                    id="loanTerm"
+                    name="loanTerm"
+                    value={assumptions.loanTerm}
+                    onChange={handleAssumptionChange}
+                    className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                    placeholder="Ex: 30"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="appreciationRate" className="block font-semibold text-gray-300">Appreciation Rate (%)</label>
+                  <input
+                    type="number"
+                    id="appreciationRate"
+                    name="appreciationRate"
+                    value={assumptions.appreciationRate}
+                    onChange={handleAssumptionChange}
+                    className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                    placeholder="Ex: 3"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="vacancyRate" className="block font-semibold text-gray-300">Vacancy Rate (%)</label>
+                  <input
+                    type="number"
+                    id="vacancyRate"
+                    name="vacancyRate"
+                    value={assumptions.vacancyRate}
+                    onChange={handleAssumptionChange}
+                    className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                    placeholder="Ex: 5"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="inflationRate" className="block font-semibold text-gray-300">Inflation Rate (%)</label>
+                  <input
+                    type="number"
+                    id="inflationRate"
+                    name="inflationRate"
+                    value={assumptions.inflationRate}
+                    onChange={handleAssumptionChange}
+                    className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                    placeholder="Ex: 2"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="saleClosingCost" className="block font-semibold text-gray-300">Sale Closing Cost (%)</label>
+                  <input
+                    type="number"
+                    id="saleClosingCost"
+                    name="saleClosingCost"
+                    value={assumptions.saleClosingCost}
+                    onChange={handleAssumptionChange}
+                    className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
+                    placeholder="Ex: 6"
+                  />
+                </div>
+              </div>
+              <div className="mt-8 text-center">
+                <button
+                  onClick={handleToggleAssumptions}
+                  className="bg-[#2a2a2a] hover:bg-[#475569] text-white py-2 px-6 rounded-md"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Deal Form and Saved Deals */}
           <h2 className="text-xl font-bold mb-6">{editIndex !== null ? 'Edit Deal' : 'Create New Deal'}</h2>
           <form onSubmit={handleSubmit} className="space-y-4 mb-6">
             <div>
@@ -556,8 +678,13 @@ export default function Deals() {
               {savedDeals.map((deal) => (
                 <li
                   key={deal.id}
-                  className={`flex justify-between items-center p-3 bg-[#2a2a2a] rounded-md shadow-sm hover:bg-[#232323] cursor-pointer${selectedDeal && selectedDeal.id === deal.id ? ' ring-2 ring-blue-500' : ''}`}
-                  onClick={() => handleSelectDeal(deal)}
+                  className={`flex justify-between items-center p-3 bg-[#2a2a2a] rounded-md shadow-sm hover:bg-[#232323] cursor-pointer${selectedDeal && selectedDeal.id === deal.id ? ' ring-2 ring-slate-400' : ''}`}
+                  onClick={() => {
+                    handleSelectDeal(deal);
+                    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                      setShowSidebar(false);
+                    }
+                  }}
                   tabIndex={0}
                   aria-label={`Select deal ${deal.deal_name}`}
                 >
@@ -588,132 +715,33 @@ export default function Deals() {
               ))}
             </ul>
           </div>
-        </aside>
-
-        {/* Assumptions Sidebar */}
-        <div
-          className={`assumptions-sidebar${showAssumptions ? ' open' : ''} bg-[#1e1e1e] text-gray-300`}
-          style={{
-            left: '20rem',
-            width: '20rem',
-            padding: '20px',
-            zIndex: 40,
-            top: '4rem',
-            height: 'calc(100vh - 4rem)',
-            overflowY: 'auto',
-            boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
-            borderLeft: '1px solid #2a2a2a',
-            position: 'fixed',
-            transition: 'transform 0.5s ease',
-            transform: showAssumptions ? 'translateX(0)' : 'translateX(-100%)',
-            display: 'block',
-          }}
-        >
-          <h2 className="text-xl font-bold mb-6">Assumptions and Deal Inputs</h2>
-
-          {/* Inputs for Assumptions */}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="downPayment" className="block font-semibold text-gray-300">Down Payment (%)</label>
-              <input
-                type="number"
-                id="downPayment"
-                name="downPayment"
-                value={assumptions.downPayment}
-                onChange={handleAssumptionChange}
-                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
-                placeholder="Ex: 20"
-              />
-            </div>
-            <div>
-              <label htmlFor="interestRate" className="block font-semibold text-gray-300">Interest Rate (%)</label>
-              <input
-                type="number"
-                id="interestRate"
-                name="interestRate"
-                value={assumptions.interestRate}
-                onChange={handleAssumptionChange}
-                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
-                placeholder="Ex: 5"
-              />
-            </div>
-            <div>
-              <label htmlFor="loanTerm" className="block font-semibold text-gray-300">Loan Term (Years)</label>
-              <input
-                type="number"
-                id="loanTerm"
-                name="loanTerm"
-                value={assumptions.loanTerm}
-                onChange={handleAssumptionChange}
-                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
-                placeholder="Ex: 30"
-              />
-            </div>
-            <div>
-              <label htmlFor="appreciationRate" className="block font-semibold text-gray-300">Appreciation Rate (%)</label>
-              <input
-                type="number"
-                id="appreciationRate"
-                name="appreciationRate"
-                value={assumptions.appreciationRate}
-                onChange={handleAssumptionChange}
-                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
-                placeholder="Ex: 3"
-              />
-            </div>
-            <div>
-              <label htmlFor="vacancyRate" className="block font-semibold text-gray-300">Vacancy Rate (%)</label>
-              <input
-                type="number"
-                id="vacancyRate"
-                name="vacancyRate"
-                value={assumptions.vacancyRate}
-                onChange={handleAssumptionChange}
-                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
-                placeholder="Ex: 5"
-              />
-            </div>
-            <div>
-              <label htmlFor="inflationRate" className="block font-semibold text-gray-300">Inflation Rate (%)</label>
-              <input
-                type="number"
-                id="inflationRate"
-                name="inflationRate"
-                value={assumptions.inflationRate}
-                onChange={handleAssumptionChange}
-                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
-                placeholder="Ex: 2"
-              />
-            </div>
-            <div>
-              <label htmlFor="saleClosingCost" className="block font-semibold text-gray-300">Sale Closing Cost (%)</label>
-              <input
-                type="number"
-                id="saleClosingCost"
-                name="saleClosingCost"
-                value={assumptions.saleClosingCost}
-                onChange={handleAssumptionChange}
-                className="w-full p-3 border border-[#2a2a2a] rounded-md bg-[#2a2a2a] text-white"
-                placeholder="Ex: 6"
-              />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <button
-              onClick={handleToggleAssumptions}
-              className="bg-[#2a2a2a] hover:bg-[#475569] text-white py-2 px-4 rounded-md"
-            >
-              Close Assumptions
-            </button>
-          </div>
         </div>
 
+        {/* Assumptions Sidebar removed; all sidebar content now lives in the drawer above */}
+
+        {/* Persistent mobile floating "+" button to open sidebar drawer */}
+        <div className="md:hidden fixed bottom-6 left-4 z-50">
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="bg-[#475569] hover:bg-[#334155] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg"
+            aria-label={showSidebar ? "Close Deal Form" : "Open Deal Form"}
+          >
+            <span
+              className={`transform transition-transform duration-300 ${
+                showSidebar ? 'rotate-135' : 'rotate-0'
+              }`}
+            >
+              +
+            </span>
+          </button>
+        </div>
         {/* Main Content for Displaying Selected Deal */}
         <main
-          className={`flex-1 p-10 pt-16${showAssumptions ? ' content-with-assumptions' : ''} bg-[#121212] text-gray-300`}
+          className={`flex-1 p-10 pt-16 bg-[#121212] text-gray-300`}
           style={{
-            marginLeft: showAssumptions ? '40rem' : '20rem',
+            marginLeft: typeof window !== 'undefined' && window.innerWidth >= 768
+              ? (showAssumptions ? '40rem' : '20rem')
+              : '0',
             transition: 'margin-left 0.3s ease',
             overflowY: 'auto',
             minHeight: '100vh'
