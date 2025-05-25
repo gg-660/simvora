@@ -63,6 +63,7 @@ function HistogramChart({ data, label }) {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       title: { display: true, text: label }
@@ -82,7 +83,11 @@ function HistogramChart({ data, label }) {
     }
   };
 
-  return <Bar data={chartData} options={options} />;
+  return (
+    <div style={{ height: '300px' }}>
+      <Bar data={chartData} options={options} />
+    </div>
+  );
 }
 const historicalData = [
   { year: 1976, inflation: 5.77, rentGrowth: 2.93, homePriceGrowth: 7.20, vacancyRate: 5.58 },
@@ -844,65 +849,81 @@ export default function Simulations() {
           color: '#e0e0e0',
         }}
       >
-        {/* Main Sidebar (Deal Form) */}
-        <div className="h-screen sticky top-0 overflow-y-auto" style={{ flexShrink: 0 }}>
-          <aside
-            className="w-80 p-6 h-full overflow-y-auto space-y-4"
-            style={{
-              backgroundColor: '#1e1e1e',
-              borderRight: '2px solid #333',
-              color: '#e0e0e0',
-            }}
-          >
-            {/* Assumptions input fields */}
-            <div className="space-y-4 mb-6">
-              <h3 className="text-lg font-semibold text-white">Assumptions</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-300">Loan Term (Years)</label>
-                <input
-                  type="number"
-                  name="loanTerm"
-                  value={assumptions.loanTerm}
-                  onChange={handleAssumptionChange}
-                  className="w-full p-2 mt-1 rounded-md bg-[#2a2a2a] text-white border border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300">Interest Rate (%)</label>
-                <input
-                  type="number"
-                  name="interestRate"
-                  value={assumptions.interestRate}
-                  onChange={handleAssumptionChange}
-                  className="w-full p-2 mt-1 rounded-md bg-[#2a2a2a] text-white border border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300">Down Payment (%)</label>
-                <input
-                  type="number"
-                  name="downPayment"
-                  value={assumptions.downPayment}
-                  onChange={handleAssumptionChange}
-                  className="w-full p-2 mt-1 rounded-md bg-[#2a2a2a] text-white border border-gray-600"
-                />
-              </div>
+        {/* Sidebar (Deal Form + Assumptions) with mobile toggle */}
+        <div
+          className={`${
+            showAssumptions
+              ? 'fixed inset-0 z-40 w-full bg-[#1e1e1e] md:static md:w-80'
+              : 'hidden md:block md:static md:w-80'
+          } min-h-screen overflow-y-auto border-r border-gray-700 p-4 pt-24 pb-24`}
+          style={{ flexShrink: 0 }}
+        >
+          {/* Assumptions input fields */}
+          <div className="space-y-4 mb-8">
+            <h3 className="text-lg font-semibold text-white">Assumptions</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-300">Loan Term (Years)</label>
+              <input
+                type="number"
+                name="loanTerm"
+                value={assumptions.loanTerm}
+                onChange={handleAssumptionChange}
+                className="w-full p-2 mt-1 rounded-md bg-[#2a2a2a] text-white border border-gray-600"
+              />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300">Interest Rate (%)</label>
+              <input
+                type="number"
+                name="interestRate"
+                value={assumptions.interestRate}
+                onChange={handleAssumptionChange}
+                className="w-full p-2 mt-1 rounded-md bg-[#2a2a2a] text-white border border-gray-600"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300">Down Payment (%)</label>
+              <input
+                type="number"
+                name="downPayment"
+                value={assumptions.downPayment}
+                onChange={handleAssumptionChange}
+                className="w-full p-2 mt-1 rounded-md bg-[#2a2a2a] text-white border border-gray-600"
+              />
+            </div>
+          </div>
+          <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white mb-6">Your Deals</h2>
             {savedDeals.map((deal) => (
               <div
                 key={deal.id}
-                onClick={() => handleSelectDeal(deal)}
+                onClick={() => {
+                  handleSelectDeal(deal);
+                  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                    setShowAssumptions(false);
+                  }
+                }}
                 className={`cursor-pointer p-4 border rounded-md transition-all duration-200 ${
                   selectedDeal?.id === deal.id
-                    ? 'bg-blue-800 border-blue-400 ring-2 ring-blue-300'
+                    ? 'border-2 border-[#475569]'
                     : 'bg-[#232323] border-[#333] hover:bg-[#2c2c2c]'
                 }`}
               >
                 <p className="text-md font-semibold text-white truncate">{deal.deal_name}</p>
               </div>
             ))}
-          </aside>
+          </div>
+        </div>
+
+        {/* Mobile "+" toggle button */}
+        <div className="md:hidden fixed bottom-6 left-4 z-50">
+          <button
+            onClick={() => setShowAssumptions(!showAssumptions)}
+            className="bg-[#475569] hover:bg-[#334155] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg"
+            aria-label={showAssumptions ? "Close Sidebar" : "Open Sidebar"}
+          >
+            <span className={`transform transition-transform duration-300 ${showAssumptions ? 'rotate-135' : 'rotate-0'}`}>+</span>
+          </button>
         </div>
 
         {/* Assumptions Sidebar removed */}
@@ -918,24 +939,22 @@ export default function Simulations() {
           <div className="max-w-screen-xl mx-auto w-full space-y-12 p-10 pt-16">
             {/* Selected Deal label at top center (now styled card) */}
             {selectedDeal && (
-              <div className="mb-6">
-                <div className="bg-[#475569] px-6 py-4 rounded-lg shadow-md text-2xl font-bold text-white text-center w-full flex justify-center items-center gap-4">
-                  <span className="flex items-center gap-3">
-                    {selectedDeal.deal_name}
+              <>
+                <div className="mb-6">
+                  <div className="w-full bg-[#475569] p-4 rounded-lg shadow-md text-white flex flex-col items-center justify-center">
+                    <h1 className="text-2xl font-bold text-white text-center">{selectedDeal.deal_name}</h1>
                     {selectedDeal.scorecard_score !== undefined && selectedDeal.scorecard_score !== null && (
-                      <span
-                        className={`text-lg font-bold px-3 py-1 rounded ${
-                          selectedDeal.scorecard_score >= 90
-                            ? 'text-green-400 border border-green-400 bg-green-900/20'
-                            : selectedDeal.scorecard_score >= 80
-                            ? 'text-lime-400 border border-lime-400 bg-lime-900/20'
-                            : selectedDeal.scorecard_score >= 70
-                            ? 'text-yellow-300 border border-yellow-300 bg-yellow-900/20'
-                            : selectedDeal.scorecard_score >= 60
-                            ? 'text-orange-300 border border-orange-300 bg-orange-900/20'
-                            : 'text-red-500 border border-red-500 bg-red-900/20'
-                        }`}
-                      >
+                      <span className={`text-md font-bold mt-2 px-4 py-1 rounded ${
+                        selectedDeal.scorecard_score >= 90
+                          ? 'text-green-400 border border-green-400 bg-green-900/20'
+                          : selectedDeal.scorecard_score >= 80
+                          ? 'text-lime-400 border border-lime-400 bg-lime-900/20'
+                          : selectedDeal.scorecard_score >= 70
+                          ? 'text-yellow-300 border border-yellow-300 bg-yellow-900/20'
+                          : selectedDeal.scorecard_score >= 60
+                          ? 'text-orange-300 border border-orange-300 bg-orange-900/20'
+                          : 'text-red-500 border border-red-500 bg-red-900/20'
+                      }`}>
                         {(() => {
                           const percent = selectedDeal.scorecard_score;
                           if (percent >= 90) return 'A';
@@ -946,9 +965,10 @@ export default function Simulations() {
                         })()} ({selectedDeal.scorecard_score.toFixed(1)}%)
                       </span>
                     )}
-                  </span>
+                  </div>
                 </div>
-              </div>
+                {/* ...main page content here */}
+              </>
             )}
             {/* Summary Card Row */}
             {selectedDeal && (
@@ -1201,23 +1221,21 @@ export default function Simulations() {
                         <h3 className="text-md font-semibold text-gray-400 mb-4 text-center">
                           DSCR &lt; 1.2 (30 Year Span)
                         </h3>
-                        <div className="w-full flex justify-between items-center h-full">
-                          <div className="flex-1 flex justify-center items-center h-full">
-                            <div className="w-56 h-56 flex items-center justify-center">
-                              <Doughnut
-                                data={chartData}
-                                options={{
-                                  plugins: {
-                                    legend: {
-                                      display: false
-                                    }
+                        <div className="flex flex-col items-center h-full">
+                          <div className="w-56 h-56 flex items-center justify-center mb-4">
+                            <Doughnut
+                              data={chartData}
+                              options={{
+                                plugins: {
+                                  legend: {
+                                    display: false
                                   }
-                                }}
-                                className="mx-auto my-auto"
-                              />
-                            </div>
+                                }
+                              }}
+                              className="mx-auto my-auto"
+                            />
                           </div>
-                          <div className="ml-6 text-sm text-gray-300 space-y-2 flex flex-col justify-center">
+                          <div className="text-sm text-gray-300 space-y-2">
                             <div className="flex items-center">
                               <span className="w-4 h-4 bg-gray-300 inline-block mr-2"></span>
                               <span>DSCR &lt; 1.2</span>

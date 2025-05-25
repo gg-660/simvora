@@ -52,6 +52,7 @@ const sectionWeights = {
 };
 
 export default function Scorecard() {
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [userId, setUserId] = useState(null);
   // Helper to compute numeric score for a given metric value and thresholds
   const getNumericScore = (value, thresholds, invert = false) => {
@@ -293,12 +294,12 @@ export default function Scorecard() {
     fetchPresets();
   }, [userId]);
 
-  // Save weights to Supabase presets table when weights change
+  // Save weights to Supabase presets table when weights change, but only if "Default" is selected
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || selectedWeightPreset !== 'Default') return;
     supabase.from('presets')
       .upsert([{ user_id: userId, preset_type: 'weights', data: weights }], { onConflict: ['user_id', 'preset_type'] });
-  }, [weights]);
+  }, [weights, userId, selectedWeightPreset]);
 
   // Save thresholds to Supabase presets table when thresholds change
   useEffect(() => {
@@ -438,58 +439,147 @@ export default function Scorecard() {
   return (
     <>
       <Navbar />
-      <div className="flex min-h-screen bg-[#121212] text-white">
-        <Sidebar
-          weightPresets={[
-            { name: 'Default', data: weights },
-            ...userWeightPresets
-          ]}
-          thresholdPresets={[
-            { name: 'Default Thresholds', data: defaultThresholdMap },
-            ...userThresholdPresets
-          ]}
-          selectedWeightPreset={selectedWeightPreset}
-          selectedThresholdPreset={selectedThresholdPreset}
-          onSelectWeightPreset={(preset) => {
-            setSelectedWeightPreset(preset.name);
-            if (preset.name === 'Default') {
-              setWeights({
-                irrCashFlow: 5, irrTotal: 5, appreciation: 5, finalValue: 5,
-                irrCFSim: 4, irrTotalSim: 4, totalCashFlow: 4, averageCashFlow: 5,
-                equityMultiple: 2, averageCFSim: 5, totalCFSim: 4, breakEvenYear: 4,
-                finalEquity: 2, finalEquitySim: 2, maxLtv: 3, maxLtvSim: 3,
-                averageDscr: 3, minDscr: 3, yearsDscrBelow1_2: 3, minDSCRSim: 3,
-                yearsDSCRUnder1_2Sim: 3, sharpeRatio: 5, sharpeRatioSim: 5,
-                maxDrawdownValueSim: 1, maxDrawdownEquitySim: 1,
-                worstCashFlow: 4, worstCFSim: 4, negativeCFYearsSim: 4, negativeCashFlowYears: 4
-              });
-            } else {
-              setWeights(preset.data);
-            }
-          }}
-          onSelectThresholdPreset={(preset) => {
-            setSelectedThresholdPreset(preset.name);
-            if (preset.name === 'Default Thresholds') {
-              setThresholds(defaultThresholdMap);
-            } else {
-              setThresholds(preset.data);
-            }
-          }}
-          deals={userDeals}
-          selectedDealId={dealIdFromQuery}
-          onSelectDeal={(id) => router.replace({ pathname: router.pathname, query: { dealId: id } }, undefined, { shallow: true })}
-          totalSectionWeight={Object.entries(sectionMetrics).reduce(
-            (sum, [section, keys]) => sum + keys.reduce((acc, key) => acc + (weights[key] ?? 0), 0),
-            0
-          )}
-          setUserWeightPresets={setUserWeightPresets}
-          setUserThresholdPresets={setUserThresholdPresets}
-          weights={weights}
-          thresholds={thresholds}
-        />
+      {/* Mobile toggle button */}
+      {!sidebarVisible && (
+        <div className="md:hidden fixed bottom-6 left-4 z-50">
+          <button
+            onClick={() => setSidebarVisible(!sidebarVisible)}
+            className="bg-[#475569] hover:bg-[#334155] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg"
+            aria-label={sidebarVisible ? "Close Sidebar" : "Open Sidebar"}
+          >
+            <span
+              className={`transform transition-transform duration-300 ${
+                sidebarVisible ? 'rotate-135' : 'rotate-0'
+              }`}
+            >
+              +
+            </span>
+          </button>
+        </div>
+      )}
+      <div className="flex flex-col md:flex-row min-h-screen bg-[#121212] text-white">
+        {/* Sidebar */}
+        {/* Mobile toggle button */}
+        {/* (Redundant, already rendered above) */}
+        {/* Desktop sidebar: always visible */}
+        <div className="hidden md:block md:w-1/3 lg:w-1/4 max-w-[320px] md:max-w-none">
+          <Sidebar
+            weightPresets={[
+              { name: 'Default', data: weights },
+              ...userWeightPresets
+            ]}
+            thresholdPresets={[
+              { name: 'Default Thresholds', data: defaultThresholdMap },
+              ...userThresholdPresets
+            ]}
+            selectedWeightPreset={selectedWeightPreset}
+            selectedThresholdPreset={selectedThresholdPreset}
+            onSelectWeightPreset={(preset) => {
+              setSelectedWeightPreset(preset.name);
+              if (preset.name === 'Default') {
+                setWeights({
+                  irrCashFlow: 5, irrTotal: 5, appreciation: 5, finalValue: 5,
+                  irrCFSim: 4, irrTotalSim: 4, totalCashFlow: 4, averageCashFlow: 5,
+                  equityMultiple: 2, averageCFSim: 5, totalCFSim: 4, breakEvenYear: 4,
+                  finalEquity: 2, finalEquitySim: 2, maxLtv: 3, maxLtvSim: 3,
+                  averageDscr: 3, minDscr: 3, yearsDscrBelow1_2: 3, minDSCRSim: 3,
+                  yearsDSCRUnder1_2Sim: 3, sharpeRatio: 5, sharpeRatioSim: 5,
+                  maxDrawdownValueSim: 1, maxDrawdownEquitySim: 1,
+                  worstCashFlow: 4, worstCFSim: 4, negativeCFYearsSim: 4, negativeCashFlowYears: 4
+                });
+              } else {
+                setWeights(preset.data);
+              }
+            }}
+            onSelectThresholdPreset={(preset) => {
+              setSelectedThresholdPreset(preset.name);
+              if (preset.name === 'Default Thresholds') {
+                setThresholds(defaultThresholdMap);
+              } else {
+                setThresholds(preset.data);
+              }
+            }}
+            deals={userDeals}
+            selectedDealId={dealIdFromQuery}
+            onSelectDeal={(id) => router.replace({ pathname: router.pathname, query: { dealId: id } }, undefined, { shallow: true })}
+            totalSectionWeight={Object.entries(sectionMetrics).reduce(
+              (sum, [section, keys]) => sum + keys.reduce((acc, key) => acc + (weights[key] ?? 0), 0),
+              0
+            )}
+            setUserWeightPresets={setUserWeightPresets}
+            setUserThresholdPresets={setUserThresholdPresets}
+            weights={weights}
+            thresholds={thresholds}
+          />
+        </div>
+        {/* Mobile sidebar: toggleable */}
+        {sidebarVisible && (
+          <div className="fixed inset-0 z-40 bg-[#1e1e1e] w-full h-full overflow-y-auto md:hidden pt-20 pb-32">
+            <Sidebar
+              weightPresets={[
+                { name: 'Default', data: weights },
+                ...userWeightPresets
+              ]}
+              thresholdPresets={[
+                { name: 'Default Thresholds', data: defaultThresholdMap },
+                ...userThresholdPresets
+              ]}
+              selectedWeightPreset={selectedWeightPreset}
+              selectedThresholdPreset={selectedThresholdPreset}
+              onSelectWeightPreset={(preset) => {
+                setSelectedWeightPreset(preset.name);
+                if (preset.name === 'Default') {
+                  setWeights({
+                    irrCashFlow: 5, irrTotal: 5, appreciation: 5, finalValue: 5,
+                    irrCFSim: 4, irrTotalSim: 4, totalCashFlow: 4, averageCashFlow: 5,
+                    equityMultiple: 2, averageCFSim: 5, totalCFSim: 4, breakEvenYear: 4,
+                    finalEquity: 2, finalEquitySim: 2, maxLtv: 3, maxLtvSim: 3,
+                    averageDscr: 3, minDscr: 3, yearsDscrBelow1_2: 3, minDSCRSim: 3,
+                    yearsDSCRUnder1_2Sim: 3, sharpeRatio: 5, sharpeRatioSim: 5,
+                    maxDrawdownValueSim: 1, maxDrawdownEquitySim: 1,
+                    worstCashFlow: 4, worstCFSim: 4, negativeCFYearsSim: 4, negativeCashFlowYears: 4
+                  });
+                } else {
+                  setWeights(preset.data);
+                }
+              }}
+              onSelectThresholdPreset={(preset) => {
+                setSelectedThresholdPreset(preset.name);
+                if (preset.name === 'Default Thresholds') {
+                  setThresholds(defaultThresholdMap);
+                } else {
+                  setThresholds(preset.data);
+                }
+              }}
+              deals={userDeals}
+              selectedDealId={dealIdFromQuery}
+              onSelectDeal={(id) => {
+                router.replace({ pathname: router.pathname, query: { dealId: id } }, undefined, { shallow: true });
+                setSidebarVisible(false);
+              }}
+              totalSectionWeight={Object.entries(sectionMetrics).reduce(
+                (sum, [section, keys]) => sum + keys.reduce((acc, key) => acc + (weights[key] ?? 0), 0),
+                0
+              )}
+              setUserWeightPresets={setUserWeightPresets}
+              setUserThresholdPresets={setUserThresholdPresets}
+              weights={weights}
+              thresholds={thresholds}
+            />
+            <div className="fixed bottom-6 left-4 z-50">
+              <button
+                onClick={() => setSidebarVisible(false)}
+                className="bg-[#475569] hover:bg-[#334155] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg"
+                aria-label="Close Sidebar"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 w-full mt-6 md:mt-0 p-6">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-white">Scorecard</h1>
             <p className="text-gray-400 mt-1">Evaluate this deal across performance, cash flow, risk, and return.</p>
