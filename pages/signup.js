@@ -18,6 +18,9 @@ export default function Signup() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: 'https://simvora.com/auth/callback',
+      },
     });
 
     if (error) {
