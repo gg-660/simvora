@@ -1,5 +1,3 @@
-
-
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
@@ -10,7 +8,7 @@ export default function Callback() {
 
   useEffect(() => {
     const handleConfirm = async () => {
-      const { error } = await supabase.auth.getSessionFromUrl();
+      const { error } = await supabase.auth.exchangeCodeForSession();
 
       if (!error) {
         toast.success('Email confirmed!');
@@ -25,7 +23,7 @@ export default function Callback() {
     };
 
     handleConfirm();
-  }, []);
+  }, [router]);
 
   return <p className="text-white text-center mt-10">Confirming your email...</p>;
 }
