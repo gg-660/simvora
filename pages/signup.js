@@ -19,7 +19,7 @@ export default function Signup() {
       email,
       password,
       options: {
-        emailRedirectTo: 'https://simvora.com/auth/callback',
+        emailRedirectTo: 'https://simvora.com',
       },
     });
 
