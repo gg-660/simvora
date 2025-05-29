@@ -7,25 +7,30 @@ export default function Callback() {
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
+    let isMounted = true;
+
     const handleAuth = async () => {
       try {
         const { error } = await supabase.auth.exchangeCodeForSession();
         if (error) {
-          console.error("Auth exchange error:", error.message);
-          router.replace('/login');
+          if (isMounted) router.replace('/login');
         } else {
-          setStatus('confirmed');
+          if (isMounted) setStatus('confirmed');
           setTimeout(() => {
-            router.replace('/');
+            if (isMounted) router.replace('/');
           }, 15000);
         }
       } catch (err) {
         console.error("Unexpected error:", err);
-        router.replace('/login');
+        if (isMounted) router.replace('/login');
       }
     };
 
     handleAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   if (status === 'loading') {
