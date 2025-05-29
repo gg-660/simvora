@@ -13,7 +13,7 @@ export default function Callback() {
       if (!error) {
         sessionStorage.setItem('emailConfirmed', '1');
       }
-      router.replace('/');
+      router.push('/');
     };
 
     run();

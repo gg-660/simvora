@@ -57,7 +57,7 @@ export default function Login() {
         },
       });
       sessionStorage.setItem('loginSuccess', '1');
-      router.replace('/');
+      router.push('/');
     } else {
       setError('Login succeeded but no session found.');
     }
