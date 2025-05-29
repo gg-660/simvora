@@ -6,9 +6,13 @@ export default function Callback() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("callback page hit");
+
     const run = async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession();
-      router.replace(error ? '/login' : '/');
+      // const { error } = await supabase.auth.exchangeCodeForSession();
+      setTimeout(() => {
+        router.replace('/');
+      }, 100);
     };
 
     run();
