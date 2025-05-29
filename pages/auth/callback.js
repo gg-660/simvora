@@ -28,6 +28,14 @@ export default function Callback() {
     handleAuth();
   }, [router]);
 
+  if (status === 'loading') {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-[#121212] text-white">
+        <p className="text-gray-400 text-sm">Verifying your email...</p>
+      </main>
+    );
+  }
+
   if (status === 'confirmed') {
     return (
       <main className="flex flex-col items-center justify-center min-h-screen bg-[#121212] text-white p-8">
