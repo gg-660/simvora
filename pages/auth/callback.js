@@ -1,29 +1,31 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
-import { toast } from 'react-hot-toast'; // or adjust if using a different toast library
+import { toast } from 'react-hot-toast';
 
 export default function Callback() {
   const router = useRouter();
 
   useEffect(() => {
-    const handleConfirm = async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession();
-
-      if (!error) {
-        toast.success('Email confirmed!');
-      } else {
-        toast.error('There was a problem confirming your email.');
+    const handleAuth = async () => {
+      try {
+        const { error } = await supabase.auth.exchangeCodeForSession();
+        if (error) {
+          console.error("Auth exchange error:", error.message);
+          toast.error("There was a problem confirming your email.");
+          router.replace('/login');
+        } else {
+          toast.success("Email confirmed!");
+          router.replace('/');
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        router.replace('/login');
       }
-
-      // Redirect to login after delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
     };
 
-    handleConfirm();
+    handleAuth();
   }, [router]);
 
-  return <p className="text-white text-center mt-10">Confirming your email...</p>;
+  return null;
 }
