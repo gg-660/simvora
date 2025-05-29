@@ -44,14 +44,19 @@ export default function Login() {
 
     if (data.session) {
       console.log('Login successful, redirecting...');
-      toast.success('Login successful!', {
-        icon: '✅',
+      toast.success('Login Successful!', {
         duration: 3000,
+        position: 'bottom-center',
         style: {
-          background: '#1e1e1e',
-          color: '#22c55e', // Tailwind green-500
+          background: '#22c55e',
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '14px 20px',
+          borderRadius: '8px',
         },
       });
+      sessionStorage.setItem('loginSuccess', '1');
       router.replace('/');
     } else {
       setError('Login succeeded but no session found.');

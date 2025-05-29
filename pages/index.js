@@ -1,7 +1,44 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 export default function Home() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (sessionStorage.getItem('loginSuccess')) {
+        toast.success('Login Successful!', {
+          duration: 3000,
+          position: 'bottom-center',
+          style: {
+            background: '#22c55e',
+            color: 'white',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '14px 20px',
+            borderRadius: '8px',
+          },
+        });
+        sessionStorage.removeItem('loginSuccess');
+      }
+
+      if (sessionStorage.getItem('emailConfirmed')) {
+        toast.success('Email confirmed successfully!', {
+          duration: 3000,
+          position: 'bottom-center',
+          style: {
+            background: '#22c55e',
+            color: 'white',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '14px 20px',
+            borderRadius: '8px',
+          },
+        });
+        sessionStorage.removeItem('emailConfirmed');
+      }
+    }
+  }, []);
   return (
     <>
       <Navbar />

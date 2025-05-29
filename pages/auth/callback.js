@@ -9,10 +9,11 @@ export default function Callback() {
     console.log("callback page hit");
 
     const run = async () => {
-      // const { error } = await supabase.auth.exchangeCodeForSession();
-      setTimeout(() => {
-        router.replace('/');
-      }, 100);
+      const { error } = await supabase.auth.exchangeCodeForSession();
+      if (!error) {
+        sessionStorage.setItem('emailConfirmed', '1');
+      }
+      router.replace('/');
     };
 
     run();
