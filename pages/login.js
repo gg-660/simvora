@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabaseClient';
 import Navbar from '@/components/Navbar';
 import { useRouter } from 'next/router';
@@ -15,7 +16,7 @@ export default function Login() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.replace('/deals');
+        router.replace('/');
       }
     };
     checkSession();
@@ -43,7 +44,15 @@ export default function Login() {
 
     if (data.session) {
       console.log('Login successful, redirecting...');
-      router.replace('/deals');
+      toast.success('Login successful!', {
+        icon: '✅',
+        duration: 3000,
+        style: {
+          background: '#1e1e1e',
+          color: '#22c55e', // Tailwind green-500
+        },
+      });
+      router.replace('/');
     } else {
       setError('Login succeeded but no session found.');
     }
