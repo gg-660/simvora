@@ -11,7 +11,7 @@ export default function App({ Component, pageProps }) {
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash.includes("access_token")) {
-      supabase.auth.getSessionFromUrl().then(() => {
+      supabase.auth.exchangeCodeForSession().then(() => {
         router.replace("/");
       });
     }
