@@ -26,7 +26,7 @@ export default function Signup() {
     if (error) {
       setError(error.message);
     } else {
-      setMessage('Check your email for a confirmation link!');
+      setMessage('Check your email for a confirmation link! Please allow up to 10 minutes before trying again. Contact support at hello@simvora.com');
       setEmail('');
       setPassword('');
       setTimeout(() => {
